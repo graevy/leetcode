@@ -20,5 +20,7 @@ data = [[5,0,3,8,6]]
 data.append([5,0,3,8,6,1,9,1,10])
 data.append([3,4])
 data.append([x for x in range(10)])
+data.append([1,1,1,0,6,12,13,14]) # wrong answer here
 
+printall(data, disjoint)
 timed(printall)
