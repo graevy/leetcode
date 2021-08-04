@@ -1,6 +1,6 @@
 def longestPalindrome(s):
     def recur(s, start, stop):
-        print(s[start:stop+1])
+        # print(s[start:stop+1])
         if not start or stop==len(s)-1:
             return (start,stop)
         if s[start-1]==s[stop+1]:
@@ -10,11 +10,12 @@ def longestPalindrome(s):
     start, stop = 0, 1
     longest, size = s[0], 1
     while stop < len(s):
-        print(start,stop)
         sub = s[start:stop+1]
-        if sub[:(len(sub)//2)] == sub[len(sub)//2:]:
+        # not sure if this check is more efficient in concept (it breaks on even palindromes anyway)
+        # if sub[:(len(sub)//2+1)] == sub[len(sub)//2:]:
+        if sub == sub[::-1]:
             substart, substop = recur(s,start,stop)
-            if substop-substart > size:
+            if substop-substart >= size:
                 size = substop-substart
                 longest = s[substart:substop+1]
         if start == stop:
@@ -24,3 +25,5 @@ def longestPalindrome(s):
     return longest
 
 print(longestPalindrome('cbbd'))
+print(longestPalindrome('jafjsjracecarfjs'))
+print(longestPalindrome('abcdd'))
