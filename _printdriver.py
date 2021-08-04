@@ -2,6 +2,7 @@ import timeit
 
 def printall(data, *funcs):
     for func in funcs:
+        print(func.__name__)
         for point in data:
             print(f"{point}: {func(point)}")
         print("")
