@@ -43,8 +43,27 @@ def disjoint3(arr):
 
     return returnidx+1
 
+# first successful solution!
+# terrible runtime?
 def disjoint4(arr):
-    pass
+    minimum = arr[0]
+    leftMaximum = arr[0]
+    arrMaximum = arr[0]
+    splitIdx = 0
+    for idx, elem in enumerate(arr[1:], 1):
+        if elem >= arrMaximum:
+            arrMaximum = elem
+            continue
+        if elem < minimum:
+            minimum = elem
+            splitIdx = idx
+            leftMaximum = arrMaximum
+            continue
+        if elem < leftMaximum:
+            splitIdx = idx
+            leftMaximum = arrMaximum
+    return splitIdx+1
+
 
 data = [[5,0,3,8,6]]
 data.append([5,0,3,8,6,1,9,1,10])
@@ -54,5 +73,5 @@ data.append([1,1,1,0,6,12,13,14])
 data.append([0,0,0,1,3,2,3,4])
 data.append([29,33,6,4,42,0,10,22,62,16,46,75,100,67,70,74,87,69,73,88])
 
-printall(data, disjoint, disjoint2, disjoint3)
+printall(data, disjoint, disjoint2, disjoint3, disjoint4)
 # timed(printall)
