@@ -51,7 +51,7 @@ def disjoint4(arr):
     arrMaximum = arr[0]
     splitIdx = 0
     for idx, elem in enumerate(arr[1:], 1):
-        if elem >= arrMaximum:
+        if elem > arrMaximum:
             arrMaximum = elem
             continue
         if elem < minimum:
