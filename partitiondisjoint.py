@@ -16,8 +16,7 @@ def disjoint(arr):
     # print(arr[:localmaximumindex],arr[localmaximumindex:])
     return localmaximumindex
 
-# sloppy demonstration of why the algorithm isn't easy
-# (index method is an unnecessary array loop)
+# it's not so easy
 def disjoint2(arr):
     return arr.index(min(arr))+1
 
