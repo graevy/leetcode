@@ -1,6 +1,6 @@
 from _printdriver import printall,timed
 
-# initial easy solution?
+# initial "solution"
 # fails arrays that constantly increase toward the end
 def disjoint(arr):
     loopindex = 1
@@ -16,7 +16,7 @@ def disjoint(arr):
     # print(arr[:localmaximumindex],arr[localmaximumindex:])
     return localmaximumindex
 
-# sloppy demonstration of why the algorithm isn't easy?
+# sloppy demonstration of why the algorithm isn't easy
 # (index method is an unnecessary array loop)
 def disjoint2(arr):
     return arr.index(min(arr))+1
@@ -43,11 +43,14 @@ def disjoint3(arr):
 
     return returnidx+1
 
-# first successful solution!
-# terrible runtime?
+# first successful solution
+# linear but still kinda slow
 def disjoint4(arr):
     minimum = arr[0]
+    # leftMaximum is the biggest value in the current candidate output array,
+    # i.e. the biggest value to the left of the minimum
     leftMaximum = arr[0]
+    # arrMaximum is just the biggest value seen so far
     arrMaximum = arr[0]
     splitIdx = 0
     for idx, elem in enumerate(arr[1:], 1):
@@ -65,13 +68,14 @@ def disjoint4(arr):
     return splitIdx+1
 
 
-data = [[5,0,3,8,6]]
-data.append([5,0,3,8,6,1,9,1,10])
-data.append([3,4])
-data.append([x for x in range(1,10)])
-data.append([1,1,1,0,6,12,13,14])
-data.append([0,0,0,1,3,2,3,4])
-data.append([29,33,6,4,42,0,10,22,62,16,46,75,100,67,70,74,87,69,73,88])
+data = [
+    [5,0,3,8,6],
+    [5,0,3,8,6,1,9,1,10],
+    [3,4],
+    [x for x in range(1,10)],
+    [1,1,1,0,6,12,13,14],
+    [0,0,0,1,3,2,3,4],
+    [29,33,6,4,42,0,10,22,62,16,46,75,100,67,70,74,87,69,73,88]
+]
 
 printall(data, disjoint, disjoint2, disjoint3, disjoint4)
-# timed(printall)
