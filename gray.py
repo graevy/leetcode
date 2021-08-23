@@ -1,3 +1,5 @@
+from _timedPrint import timedPrint
+
 # my initial answer
 def gray(n):
     out = [0,1]
@@ -19,13 +21,9 @@ def bestgray(n):
     return [i^i>>1 for i in range(2**n)]
 
 
-def printall(*funcs):
-    for func in funcs:
-        for i in range(5)[1:]:
-            print(f"{i}: {func(i)}")
-        print("")
-
-printall(gray, gray2, bestgray)
+if __name__ == '__main__':
+    data = [x for x in range(8)[1:]]
+    timedPrint(data, gray, gray2, bestgray)
 
 
 # 0

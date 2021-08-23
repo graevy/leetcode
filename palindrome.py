@@ -1,3 +1,5 @@
+from _timedPrint import timedPrint
+
 def longestPalindrome(s):
     def recur(s, start, stop):
         # print(s[start:stop+1])
@@ -24,6 +26,8 @@ def longestPalindrome(s):
             start += 1
     return longest
 
-print(longestPalindrome('cbbd'))
-print(longestPalindrome('jafjsjracecarfjs'))
-print(longestPalindrome('abcdd'))
+
+data = ['cbbd', 'jafjsjracecarfjs', 'abcdd']
+
+if __name__ == '__main__':
+    timedPrint(data, longestPalindrome)

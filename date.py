@@ -1,3 +1,5 @@
+from _timedPrint import timedPrint
+
 class Date():
     def __init__(self, mm, dd, yyyy):
         self.month = int(mm)
@@ -57,7 +59,5 @@ f = Date('12', '01', '1969')
 
 dates = (a,b,c,d,e)
 
-for date in dates:
-    for otherDate in dates:
-        if otherDate != date:
-            print(f"{date.month}/{date.day}/{date.year}, {otherDate.month}/{otherDate.day}/{otherDate.year}: {distance1(date, otherDate)}")
+if __name__ == '__main__':
+    timedPrint(dates, distance1, distance2)

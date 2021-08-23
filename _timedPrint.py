@@ -10,6 +10,7 @@ import inspect
 #     print("")
 
 
+# TODO: optionally check outputs against a correct function?
 def timedPrint(data, *funcs, n=1000):
     """prints function(s) output and runtime over datapoints 
 
@@ -37,10 +38,10 @@ def timedPrint(data, *funcs, n=1000):
 
     for point in data:
         results = []
-        print(f"Runtimes for {point} over {n} iteration{suffix}:")
+        print(f"Runtimes for datapoint {point} over {n} iteration{suffix}:")
 
         for func in funcs:
-            statement = f"{moduleName}.{func.__name__}({point})"
+            statement = f"{moduleName}.{func.__name__}({repr(point)})"
             duration = timeit(stmt=statement, setup=setup, number=n)
 
             results.append((duration, func.__name__, func(point)))
