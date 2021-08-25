@@ -17,12 +17,7 @@ def timedPrint(data, *funcs, n=10000):
     """
     suffix = '' if n==1 else 's'
 
-    # timeit operates in its own namespace. this is a huge
-    # (but necessary) headache to achieve greater timing accuracy.
-    # but you can import another namespace with its globals() param.
-    # this requires all calling functions to import their globals() as an arg.
-    # i've circumvented this by making a dict to pass as a namespace to timeit.
-    # it's maybe easier to conceptualize this as timeit's __init__ method
+    # see timeitNamespace explanation at end of file
     timeitNamespace = {}
     for func in funcs:
         timeitNamespace[func.__name__] = func
@@ -45,13 +40,6 @@ def timedPrint(data, *funcs, n=10000):
 
     return results
 
-    # a previous version used timeit's setup param to import calling modules
-    # into timeit's namespace by examining the stack.
-    # that ended up being really slow, and it required calling modules
-    # to hide code behind "if __name__ == '__main__'" statements anyway.
-    # i think, ideally, timeit could just pull functions from memory with
-    # memoryview() tricks, but i don't think that's universally reproducible.
-
 
 # this might benefit from a number kwarg for timeit looping,
 # but it's meant for short and presumably fast snippets
@@ -62,7 +50,7 @@ def timed(func):
         func (function): to time
     """
     def inner(*args, **kwargs):
-        # see timeitNamespace explanation in timedPrint
+        # see timeitNamespace explanation at end of file
         timeitNamespace = {}
         timeitNamespace[func.__name__] = func
         timeitNamespace['args'] = args
@@ -93,3 +81,17 @@ def timed(func):
             }""")
 
     return inner
+
+# timeit operates in its own namespace. this is a huge
+# (but necessary) headache to achieve greater timing accuracy.
+# but you can import another namespace with its globals() param.
+# this requires all calling functions to import their globals() as an arg.
+# i've circumvented this by making a dict to pass as a namespace to timeit.
+# it's maybe easier to conceptualize this as timeit's __init__ method
+
+# a previous version used timeit's setup param to import calling modules
+# into timeit's namespace by examining the stack.
+# that ended up being really slow, and it required calling modules
+# to hide code behind "if __name__ == '__main__'" statements anyway.
+# i think, ideally, timeit could just pull functions from memory with
+# memoryview() tricks, but i don't think that's universally reproducible.
