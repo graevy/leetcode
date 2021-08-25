@@ -1,4 +1,6 @@
-from _timedPrint import timedPrint
+from _timedPrint import *
+from itertools import permutations
+
 
 class Date():
     def __init__(self, mm, dd, yyyy):
@@ -16,6 +18,7 @@ def year(date):
     return date.year
 
 # you know, this actually fails one of the test cases
+@timed
 def distance1(date1, date2):
     # MMDDYYYY
     if abs(year(date1) - year(date2)) <= 1:
@@ -42,6 +45,7 @@ def distance1(date1, date2):
                 return -1
     return 1
 
+@timed
 def distance2(date1, date2):
     date1float = date1.day + date1.month/32 + date1.year/366
     date2float = date2.day + date2.month/32 + date2.year/366
@@ -58,6 +62,7 @@ e = Date('01', '01', '1500')
 f = Date('12', '01', '1969')
 
 dates = (a,b,c,d,e)
+data = permutations(dates, 2)
 
-if __name__ == '__main__':
-    timedPrint(dates, distance1, distance2)
+for elem in data:
+    distance2(*elem)
