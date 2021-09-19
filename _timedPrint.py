@@ -6,7 +6,7 @@ from timeit import timeit
 # TODO: optionally check outputs against a correct output?
 # TODO: support for functions with more than 1 param, or class obj params
 # (add class obj params to timeitNamespace)
-def timedPrint(data, *funcs, n=10000):
+def timedPrint(data, *funcs, n=100000):
     """prints function(s) output and runtime over datapoints 
 
     Args:
@@ -44,7 +44,8 @@ def timedPrint(data, *funcs, n=10000):
 # this might benefit from a number kwarg for timeit looping,
 # but it's meant for short and presumably fast snippets
 def timed(func):
-    """decorator wrapper for timing function runtime in-file
+    """decorator wrapper for timing function runtime in-file.
+    include kwarg number=(int) for timeit loops
 
     Args:
         func (function): to time
@@ -55,7 +56,7 @@ def timed(func):
         timeitNamespace[func.__name__] = func
         timeitNamespace['args'] = args
         timeitNamespace['kwargs'] = kwargs
-        # timeit basically runs exec(timeitStatement)
+        # timeit basically does exec(timeitStatement)
         timeitStatement = func.__name__+"(*args, **kwargs)"
 
         # begin printing
@@ -63,21 +64,26 @@ def timed(func):
         print(f"Function {func.__name__}:")
 
         # sometimes the i/o is too verbose for my terminal, so i cut it off
-        argList = str(list(args) + list(kwargs.items()))
-        if len(argList) > 50:
-            print(f"    Input:    {argList[:50]} ...")
+        paramStr = str(list(args) + list(kwargs.items()))
+        if len(paramStr) > 50:
+            print(f"    Input:    {paramStr[:50]} ...")
         else:
-            print(f"    Input:    {argList}")
+            print(f"    Input:    {paramStr}")
 
-        output = str(func(*args, **kwargs))
+        # run function once for output
+        output = repr(func(*args, **kwargs))
         if len(output) > 50:
             print(f"    Output:    {output[:50]} ...")
         else:
             print(f"    Output:    {output}")
 
+        if 'number' in kwargs: # 'in' keyword checks kwargs.keys()
+            number = kwargs[number]
+        else:
+            number = 100000
         # print the (rounded) time
         print(f"""    Relative execution time: {
-            round(timeit(timeitStatement, globals=timeitNamespace), 5)
+            round(timeit(timeitStatement, globals=timeitNamespace, number=number), 5)
             }""")
 
     return inner
