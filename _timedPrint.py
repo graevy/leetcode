@@ -41,16 +41,18 @@ def timedPrint(data, *funcs, n=100000):
     return results
 
 
-# this might benefit from a number kwarg for timeit looping,
-# but it's meant for short and presumably fast snippets
 def timed(func):
     """decorator wrapper for timing function runtime in-file.
-    include kwarg number=(int) for timeit loops
+    RESERVED KWARGS:
+    int loops (for timeit loops), 
+    int digits (for rounding), 
+    bool skipIO (to skip terminal IO), 
+    bool verification, and bool verificationData (to check output against)
 
     Args:
         func (function): to time
     """
-    def inner(*args, **kwargs):
+    def inner(*args, loops=100000, digits=3, skipIO=False, verification=False, verificationData=None, **kwargs):
         # see timeitNamespace explanation at end of file
         timeitNamespace = {}
         timeitNamespace[func.__name__] = func
@@ -60,31 +62,36 @@ def timed(func):
         timeitStatement = func.__name__+"(*args, **kwargs)"
 
         # begin printing
-        # TODO: if i ever check correctness, it should be printed here
-        print(f"Function {func.__name__}:")
+        if not skipIO:
+            # run function once for output
+            output = func(*args, **kwargs)
 
-        # sometimes the i/o is too verbose for my terminal, so i cut it off
-        paramStr = str(list(args) + list(kwargs.items()))
-        if len(paramStr) > 50:
-            print(f"    Input:    {paramStr[:50]} ...")
-        else:
-            print(f"    Input:    {paramStr}")
+            # checking correctness. i opted for 2 vars incase output is None/etc
+            if verification:
+                if output == verificationData:
+                    print(f"Function {func.__name__}: SUCCESS")
+                else:
+                    print(f"Function {func.__name__}: FAILURE. Expected "+repr(verificationData))
 
-        # run function once for output
-        output = repr(func(*args, **kwargs))
-        if len(output) > 50:
-            print(f"    Output:    {output[:50]} ...")
-        else:
-            print(f"    Output:    {output}")
+            else:
+                print(f"Function {func.__name__}:")
 
-        if 'number' in kwargs: # 'in' keyword checks kwargs.keys()
-            number = kwargs[number]
-        else:
-            number = 100000
-        # print the (rounded) time
-        print(f"""    Relative execution time: {
-            round(timeit(timeitStatement, globals=timeitNamespace, number=number), 5)
-            }""")
+            # sometimes the i/o is too verbose for my terminal, so i cut it off
+            paramStr = repr(list(args) + list(kwargs.items()))
+            if len(paramStr) > 50:
+                print(f"    Input:     {paramStr[:50]} ...")
+            else:
+                print(f"    Input:     {paramStr}")
+
+            output = repr(output)
+            if len(output) > 50:
+                print(f"    Output:    {output[:50]} ...")
+            else:
+                print(f"    Output:    {output}")
+
+            # print the (rounded) time
+            print(f"    Execution time over {loops} iterations: ", end='')
+        return round(timeit(timeitStatement, globals=timeitNamespace, number=loops), digits)
 
     return inner
 
@@ -99,5 +106,5 @@ def timed(func):
 # into timeit's namespace by examining the stack.
 # that ended up being really slow, and it required calling modules
 # to hide code behind "if __name__ == '__main__'" statements anyway.
-# i think, ideally, timeit could just pull functions from memory with
-# memoryview() tricks, but i don't think that's universally reproducible.
+# i think, ideally, timeit could just pull vars from memory with
+# memoryview() or some ctypes pointer tricks

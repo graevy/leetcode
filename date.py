@@ -49,7 +49,7 @@ def distance1(date1, date2):
 def distance2(date1, date2):
     date1float = date1.day + date1.month/32 + date1.year/366
     date2float = date2.day + date2.month/32 + date2.year/366
-    diff = date1float - date2float
+    diff = abs(date1float - date2float)
     if diff == 0:
         return 0
     return 1 if diff > 30 else  -1
@@ -61,7 +61,7 @@ d = Date('01', '01', '1969')
 e = Date('01', '01', '1500')
 f = Date('12', '01', '1969')
 
-dates = (a,b,c,d,e)
+dates = (a,b,c,d,e,f)
 data = permutations(dates, 2)
 
 for elem in data:
