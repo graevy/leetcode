@@ -1,4 +1,4 @@
-from _timedPrint import timedPrint
+from _timed import timeBatch
 
 
 # first successful solution
@@ -58,7 +58,7 @@ data = [
 ]
 
 if __name__ == '__main__':
-    timedPrint(data, disjoint4, disjoint5)
+    timeBatch(data, disjoint4, disjoint5)
 
 
 # # initial "solution"

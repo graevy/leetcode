@@ -1,4 +1,4 @@
-from _printdriver import printall
+import _timed
 
 # first attempt
 # only linearly solves some basic arrays
@@ -49,4 +49,4 @@ data = [
     [1,2,9,6,8,3,4,6,7,2,9,0,1] # 81
     ]
 
-printall(data, maxArea1)
+timeBatch(data, maxArea1)
