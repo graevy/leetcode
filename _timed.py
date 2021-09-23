@@ -3,8 +3,8 @@ from timeit import timeit
 
 # you'll want to read the timeit.timeit documentation before reading this file
 
-# this has become more useful than timeFns
-# still best to use timeFns for bulk comparisons
+# this has become more useful than timeBatch
+# still best to use timeBatch for bulk comparisons
 def timed(func):
     """decorator wrapper for timing function runtime in-file.
     RESERVED KWARGS:
@@ -81,7 +81,7 @@ def timeBatch(data, *funcs, loops=100000, digits=5, skipIO=False, verification=F
     for func in funcs:
         timeitNamespace[func.__name__] = func
 
-    results = {}
+    results = []
     # i categorize the results by datapoint instead of by function for readability, mostly
     for point in data:
         pointResults = []
@@ -105,11 +105,11 @@ def timeBatch(data, *funcs, loops=100000, digits=5, skipIO=False, verification=F
                 pointResults.append((duration, func.__name__, output))
 
         pointResults.sort()
-        results[point] = pointResults
+        results.append((point,pointResults))
 
         # printing the output
         if not skipIO:
-            suffix = 's' if n != 1 else ''
+            suffix = 's' if loops != 1 else ''
             if verification:
                 print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
                 # the key function here sorts by the last element (correctness) instead of the first (duration)
