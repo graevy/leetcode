@@ -55,9 +55,10 @@ def timed(func):
 
             # print the (rounded) time
             suffix = 's' if loops != 1 else ''
-            # a clever and probably deeply stupid way to both return output and print it neatly in-terminal
-            print(f"    Execution time over {loops} iteration{suffix}: ", end='')
-        return round(timeit(timeitStatement, globals=timeitNamespace, number=loops), digits)
+
+            duration = round(timeit(timeitStatement, globals=timeitNamespace, number=loops), digits)
+            print(f"    Execution time over {loops} iteration{suffix}: {duration}s")
+        return duration
     return inner
 
 
