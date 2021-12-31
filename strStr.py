@@ -12,6 +12,7 @@ def traverse(haystack, needle):
     return -1
 
 def again(h,n):
+    # looked up the alg to do this. knuth-morris-pratt, O(n+k). if i come back to this i want to write this one out
     pass
 
 print(traverse('hello','ll')) # first try success! i did this in 5 minutes. personal best
