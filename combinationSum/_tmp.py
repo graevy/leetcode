@@ -1,53 +1,41 @@
-target = 13
-candidates = [2,3,4,234]
+# Given an array of distinct integers candidates and a target integer target, return a list of all unique combinations of candidates where the chosen numbers sum to target. You may return the combinations in any order.
 
-candidates_copy = candidates.copy()
+# The same number may be chosen from candidates an unlimited number of times. Two combinations are unique if the frequency of at least one of the chosen numbers is different.
 
-append_list = []
-output = []
-while target > min(candidates):
-    # for candidate_copy in candidates_copy:
-    for candidate in candidates:
-        if target % candidate == 0:
-            output.append(append_list + [candidate for _ in range(target//candidate)])
-        target -= candidate
-        append_list.append(candidate)
-
-def recur():
-    out=[]
-    for candidate in candidates:
-        if target % candidate == 0:
-            out.append([candidate for _ in range(target//candidate)])
+# It is guaranteed that the number of unique combinations that sum up to target is less than 150 combinations for the given input.
 
 
+# 1 <= candidates.length <= 30
+# 1 <= candidates[i] <= 200
+# All elements of candidates are distinct.
+# 1 <= target <= 500
 
 
-# def candidate_factorize(candidates, dividend, factors=None, factor_detected=True):
-#     if factors is None:
-#         factors = []
+def solve(target, candidates):
+    result = []
+    candidates.sort()
+    def dfs(remainder, stack):
+        # if this condition is met, stack sums up to target
+        if remainder == 0:
+            result.append(stack)
+            return
 
-#     for candidate in candidates:
-#         if dividend % candidate == 0:
-#             factors.append(candidate)
-#             candidate_factorize(candidates, dividend/candidate, factors=factors, factor_detected=True)
-#             return
+        # this for loop does all the work
+        for candidate in candidates:
+            # if candidate > remainder, stack + [candidate] > target; the loop can be broken because candidates is sorted
+            if candidate > remainder:
+                break
+            # if stack is empty, we can shortcut checking candidate < stack[-1] and go straight to dfs. we also know there is a stack[-1]
+            # if candidate < stack[-1], it's already been visited, because candidates is sorted
+            if stack and candidate < stack[-1]:
+                continue
+            else:
+                dfs(remainder-candidate, stack + [candidate])
 
-#     # return all factors + result to save time
-#     factors
-#     return (factors, dividend)
+    dfs(target,[])
+    return result
 
-# def is_factorable(target, candidates):
-#     output = []
-#     history = []
-#     while target > candidate1:
-#         if target % candidate2 == 0:
-#             history.append(candidate2)
-#             output.append(history)
-#             history.clear()
-#         else:
-#             target -= candidate
-#             history.append(candidate)
-#     return False
+print(solve(13,[2,3,4]))
 
 
 # notes
@@ -58,8 +46,10 @@ def recur():
 # 2: 10, [2,3]    -> [[2,2,2,2,2],[2,2,3,3]]
 # 3: 13, [2,3,4]. -> [[2,2,2,2,2,3],[2,2,3,3,3],[3,3,3,4],[2,2,2,3,4],[2,3,4,4]]
 
-# the steps of the algorithm
+# first solution was linearithmic for case 1:
 # 1. search for combinations via target % candidate
 # 2. subtract a candidate from target. save it to a list. search again, appending that list to each hit
-# 3. repeat until candidate empty
-# this solution creates lots of duplicate entries
+# 3. repeat until candidates empty
+
+# it failed case 2, and couldn't touch case 3. eventually i realized modulo couldn't solve most cases
+# i implemented a quadratic? recursion algorithm
