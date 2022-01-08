@@ -38,9 +38,7 @@ impl Solution {
         let mut rng = rand::thread_rng();
         let mut count: i32 = 0;
         while result.next != None {
-            if rng.gen_range(0..count) < 1 {
-                result = current_node;
-            }
+            if rng.gen_range(0..count) < 1 {result = current_node;}
         }
         
     }
