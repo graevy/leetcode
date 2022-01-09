@@ -1,23 +1,23 @@
 // Definition for singly-linked list.
-// #[derive(PartialEq, Eq, Clone, Debug)]
-// pub struct ListNode {
-//   pub val: i32,
-//   pub next: Option<Box<ListNode>>
-// }
-// 
-// impl ListNode {
-//   #[inline]
-//   fn new(val: i32) -> Self {
-//     ListNode {
-//       next: None,
-//       val
-//     }
-//   }
-// }
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct ListNode {
+  pub val: i32,
+  pub next: Option<Box<ListNode>>
+}
+
+impl ListNode {
+  #[inline]
+  fn new(val: i32) -> Self {
+    ListNode {
+      next: None,
+      val
+    }
+  }
+}
 
 use rand::Rng;
 struct Solution {
-
+    res: i32
 }
 
 
@@ -33,14 +33,14 @@ impl Solution {
     
     fn get_random(&self) -> i32 {
 
-        ListNode result;
+        let mut result: i32;
         let mut current_node = head;
         let mut rng = rand::thread_rng();
         let mut count: i32 = 0;
-        while result.next != None {
-            if rng.gen_range(0..count) < 1 {result = current_node;}
+        while current_node.next != None {
+            if rng.gen_range(0..count) < 1 {result = current_node.val;}
         }
-        
+        return result
     }
 }
 
