@@ -1,3 +1,5 @@
+use rand::Rng;
+
 // Definition for singly-linked list.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ListNode {
@@ -15,7 +17,6 @@ impl ListNode {
   }
 }
 
-use rand::Rng;
 struct Solution {
     res: i32
 }
@@ -28,7 +29,7 @@ struct Solution {
 impl Solution {
 
     fn new(head: Option<Box<ListNode>>) -> Self {
-        
+        let output: Solution = get_random(head)
     }
     
     fn get_random(&self) -> i32 {
@@ -69,5 +70,5 @@ class Solution:
 **/
 
 fn main() {
-    println!("Hello, world!");
+    result = Solution().new(head)
 }
