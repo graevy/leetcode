@@ -1,13 +1,26 @@
-class Test:
-    __slots__ = 'left', 'right'
+class Trie:
 
-class Test2:
     def __init__(self):
-        self.left = None
-        self.right = None
+        self.words = {}
 
-a = Test()
-b = Test2()
+    def insert(self, word: str) -> None:
+        letter_dict = self.words
+        for char in word:
+            letter_dict = letter_dict.setdefault(char,{})
 
-print(type(a.__slots__))
-print(b.left)
+    def search(self, word: str) -> bool:
+        letter_dict = self.words
+        for char in word:
+            if char not in letter_dict:
+                return false
+            letter_dict = letter_dict[char]
+        return True
+
+    def startsWith(self, prefix: str) -> bool:
+        return self.search(prefix)
+
+
+a = Trie()
+a.insert('test')
+a.insert('two')
+print(a.search('test'),a.startsWith('t'))
