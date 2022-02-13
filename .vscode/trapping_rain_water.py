@@ -22,7 +22,7 @@
 #     0 <= height[i] <= 105
 
 
-# this doesn't account for water getting trapped in buckets-in-buckets
+# this doesn't account for water getting trapped in buckets-in-buckets at the end of the array
 # i bet linear is still possible though
 class Solution:
     def trap(self, height: list[int]) -> int:
@@ -30,7 +30,7 @@ class Solution:
         current_bucket = 0
         current_height = 0
         for considered_height in height:
-            if considered_height > current_height:
+            if considered_height >= current_height:
                 current_height = considered_height
                 total += current_bucket
                 current_bucket = 0
