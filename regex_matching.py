@@ -44,16 +44,30 @@ class Solution:
         # which index of the string s do we care about?
         # don't use enumerate, because in some asterisk cases, it stops lining up with p.
         idx = 0
+        previous = p[0]
         
-        iterator = iter(p)
-        for char in iterator:
-
-            if char == s[idx] or char == '.':
+        for char in (p + '_')[1:]:
+            if previous == '*':
+                pass
+            elif char == '*':
+                if previous == '.':
+                    return True
+                for asterisk_char in s[idx:]:
+                    if asterisk_char == previous:
+                        idx += 1
+                    else: break
+            elif previous == s[idx] or previous == '.':
                 idx += 1
-                continue
-            if char == '*':
-                try:
-                    for asterisk_char in s[idx+1:]
+            else:
+                return False
+
+            previous = char
+
+        # if previous == s[idx] or previous == '.':
+        #     idx += 1
+
+        return True if idx == len(s) else False
+            
                         
 
             # if char == s[idx] or char == '.':
@@ -82,14 +96,14 @@ class Solution:
 
             # return False
 
-        if idx != len(s):
-            return False
-        else:
-            return True
+            # if idx != len(s):
+            #     return False
+            # else:
+            #     return True
 
 data = [
     (('hellooooook', 'hel.o*'),False), (('helloooooo', 'hel.o*'),True),
-    (('ab','a'),False), (("test","t.*"),True), (("hhellooh","h*el*o*."),False),
+    (('ab','a'),False), (("test","t.*"),True), (("hhellooh","h*el*o*."),True),
     (("mississippi","mis*is*ip*."),True), (("x","i***"),False), (("x","x***"),True),
     (("aab","c*a*b"),True)
     ]
@@ -98,4 +112,4 @@ for point in data:
     if Solution().isMatch(*point[0]) != point[1]:
         print(str(point) + " failure.")
 
-# print(Solution().isMatch("mississippi","mis*is*ip*."))
+# print(Solution().isMatch("hhellooh","h*el*o*."))
