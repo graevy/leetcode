@@ -42,74 +42,45 @@ class Solution:
     def isMatch(self, s: str, p: str) -> bool:
 
         # which index of the string s do we care about?
-        # don't use enumerate, because in some asterisk cases, it stops lining up with p.
+        # don't use enumerate, because in some asterisk cases, its indexing stops lining up with p.
         idx = 0
-        previous = p[0]
+        current_char = p[0]
         
-        for char in (p + '_')[1:]:
-            if previous == '*':
+        # loop through p, but test the previous character after confirming it's not followed by an asterisk
+        # junk data added onto the end of p, so the last character is included in that iteration
+        for next_char in (p + ' ')[1:]:
+            # if we hit an asterisk, it's junk data, because we already looked at the previous character
+            # this allows us to skip consecutive asterisks
+            if current_char == '*':
                 pass
-            elif char == '*':
-                if previous == '.':
-                    return True
+            # if the next char is an asterisk, we have to loop through s until we hit a not-previous-character
+            elif next_char == '*':
                 for asterisk_char in s[idx:]:
-                    if asterisk_char == previous:
+                    if asterisk_char == current_char:
                         idx += 1
                     else: break
-            elif previous == s[idx] or previous == '.':
+            # the base case
+            elif current_char == s[idx] or current_char == '.':
                 idx += 1
+            # if there's a single pattern character mismatch, we already know it's not followed by an asterisk;
+            # we can return False safely
             else:
                 return False
 
-            previous = char
+            current_char = next_char 
 
-        # if previous == s[idx] or previous == '.':
-        #     idx += 1
-
+        # lastly, if there are more characters in s after we've exhausted p, it's not a valid pattern match
         return True if idx == len(s) else False
-            
-                        
-
-            # if char == s[idx] or char == '.':
-            #     idx += 1
-            #     continue
-
-            # try:
-            #     if p[idx] == '*':
-
-            #         # if our string so far is valid .* means the rest is automatically valid
-            #         if char == '.':
-            #             return True
-            #         # consecutive asterisks are functionally 1 asterisk, so the loop can next_char_is_asterisk_boolreak here
-            #         if char == '*':
-            #             continue
-
-            #         for asterisk_char in s[idx:]:
-            #             if asterisk_char == char:
-            #                 idx += 1
-            #             else:
-            #                 break
-            #         next(iterator)
-
-            # except IndexError: 
-            #     pass
-
-            # return False
-
-            # if idx != len(s):
-            #     return False
-            # else:
-            #     return True
 
 data = [
     (('hellooooook', 'hel.o*'),False), (('helloooooo', 'hel.o*'),True),
     (('ab','a'),False), (("test","t.*"),True), (("hhellooh","h*el*o*."),True),
     (("mississippi","mis*is*ip*."),True), (("x","i***"),False), (("x","x***"),True),
-    (("aab","c*a*b"),True)
+    (("aab","c*a*b"),True), (("ab",".*c"), False)
     ]
 
-for point in data:
-    if Solution().isMatch(*point[0]) != point[1]:
-        print(str(point) + " failure.")
+# for point in data:
+#     if Solution().isMatch(*point[0]) != point[1]:
+#         print(str(point) + " failure.")
 
-# print(Solution().isMatch("hhellooh","h*el*o*."))
+print(Solution().isMatch("test","t.*"))
