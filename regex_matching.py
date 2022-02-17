@@ -38,6 +38,12 @@
 #     p contains only lowercase English letters, '.', and '*'.
 #     It is guaranteed for each appearance of the character '*', there will be a previous valid character to match.
 
+
+# first failure: consecutive asterisks in patterns didn't align properly
+# second failure: c*b, ab
+# third failure: .*c, ab
+# sometimes, when solving a problem, the answer is going to lie more in the test suite than the algorithm
+# lesson learned
 class Solution:
     def isMatch(self, s: str, p: str) -> bool:
 
