@@ -1,48 +1,68 @@
+# simple tools to time algorithm execution and verify output
+
 from timeit import timeit
 
 
-# you'll want to read the timeit.timeit documentation before reading this file
+# def round_duration(duration: float):
+#     if duration > 60.0:
+#         mins, seconds = divmod(f, 60.0)
+#         return f"{mins}m {round(seconds)}s"
+#     if duration * 10**9 < 1.0:
+#         return f"{duration * 10**12}ps"
+#     if duration * 10**6 < 1.0:
+#         return f"{duration * 10**9}ns"
+#     if duration * 10**3 < 1.0:
+#         return f"{duration * 10**6}μs"
+#     if duration < 1.0:
+#         return f"{duration * 10**3}ms"
+#     else:
+#         return f"{duration}s"
 
-# this has become more useful than timeBatch
-# still best to use timeBatch for bulk comparisons
-def timed(func):
+
+
+# this has become more useful than batch
+# still best to use batch for bulk comparisons
+def timed(fn):
     """decorator wrapper for timing function runtime in-file.
+
     RESERVED KWARGS:
     loops (int, for timeit loops), 
     digits (int, for rounding), 
-    skipIO (bool, to skip terminal IO), 
-    verification, and verificationData (bool and any, to check output against)
+    skip_print (bool, to skip console output), 
+    classify, and classifier (bool and any, to check output against)
 
     Args:
-        func (function): to time
+        fn (function): to time
+
+    Runtime: O(loops)
     """
-    def inner(*args, loops=100000, digits=5, skipIO=False, verification=False, verificationData=None, **kwargs):
-        # see timeitNamespace explanation at end of file
-        timeitNamespace = {func.__name__:func, 'args':args, 'kwargs':kwargs}
-        # timeit basically does exec(timeitStatement)
-        timeitStatement = func.__name__+"(*args, **kwargs)"
+    def inner(*args, loops=100000, digits=5, skip_print=False, classify=False, classifier=None, **kwargs):
+        # see timeit_namespace explanation at end of file
+        timeit_namespace = {fn.__name__:fn, 'args':args, 'kwargs':kwargs}
+        # timeit basically does exec(timeit_statement)
+        timeit_statement = fn.__name__+"(*args, **kwargs)"
 
         # begin printing
-        if not skipIO:
+        if not skip_print:
             # run function once for output
-            output = func(*args, **kwargs)
+            output = fn(*args, **kwargs)
 
             # checking correctness. i opted for 2 vars incase output is None, False, etc
-            if verification:
-                if output == verificationData:
-                    print(f"Function {func.__name__}: SUCCESS")
+            if classify:
+                if output == classifier:
+                    print(f"function {fn.__name__}: SUCCESS")
                 else:
-                    print(f"Function {func.__name__}: FAILURE. "+\
-                          f"Expected type {type(verificationData)}: {repr(verificationData)}")
+                    print(f"function {fn.__name__}: FAILURE. "+\
+                          f"Expected type {type(classifier)}: {repr(classifier)}")
             else:
-                print(f"Function {func.__name__}:")
+                print(f"function {fn.__name__}:")
 
             # sometimes the output is too verbose for my terminal, so i cut it off here
-            paramStr = repr(list(args) + list(kwargs.items()))
-            if len(paramStr) > 50:
-                print(f"    Input:     {paramStr[:50]} ...")
+            param_str = repr(list(args) + list(kwargs.items()))
+            if len(param_str) > 50:
+                print(f"    Input:     {param_str[:50]} ...")
             else:
-                print(f"    Input:     {paramStr}")
+                print(f"    Input:     {param_str}")
 
             output = repr(output)
             if len(output) > 50:
@@ -53,71 +73,82 @@ def timed(func):
             # print the (rounded) time
             suffix = 's' if loops != 1 else ''
 
-            duration = round(timeit(timeitStatement, globals=timeitNamespace, number=loops), digits)
+            duration = round(timeit(timeit_statement, globals=timeit_namespace, number=loops), digits)
             print(f"    Execution time over {loops} iteration{suffix}: {duration}s")
         return duration
     return inner
 
 
-# TODO: support for functions with more than 1 param, or class obj params
-# (add class obj params to timeitNamespace)
-def timeBatch(data, *funcs, loops=100000, digits=5, skipIO=False, verification=False, verificationData=None):
+# def compare(fns, data, classifiers, unpack_data=False, loops=100000):
+#     fns = [timed(fn) for fn in fns]
+
+#     if not unpack_data:
+#         res = [(fn(point, skip_print=True, classify=True, classifier=classifier), point, classifier)
+#                     for point, classifier in zip(data, classifiers, strict=True)
+#                     for fn in fns]
+#     else:
+#         res = [(fn(*point, skip_print=True, classify=True, classifier=classifier), point, classifier)
+#                     for point, classifier in zip(data, classifiers, strict=True)
+#                     for fn in fns]
+
+#     for r in res:
+#         print(f"")
+
+
+def batch(data, *fns, loops=100000, digits=5, skip_print=False, classify=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
-        data (iterable): a container of data
-        *funcs (function): functions to evaluate
-        loops (int, optional): number of iterations (for runtime calc)
+        data (list): of points as function input
+        *fns (function): s to evaluate
+        loops (int, optional): of iterations (for runtime calc)
                            per datapoint per function. Defaults to 100000.
-        digits (int, optional): number of digits to round output with. Defaults to 5.
-        skipIO (bool, optional): skip printing output? Defaults to False.
-        verification (bool, optional): check output correctness? Defaults to false.
-        verificationData (type(data), optional): data for verification. Defaults to None.
+        digits (int, optional): of digits to round output with. Defaults to 5.
+        skip_print (bool, optional): skip printing output? Defaults to False.
+        classify (bool, optional): check output correctness against
+                            the last member of each data point? Defaults to false.
+        unpack_data (bool, optional): for fn(*point) instead of fn(point)
+
+    Runtime: O(data*fns*loops)
     """
-    # see timeitNamespace explanation at end of file
-    timeitNamespace = {func.__name__:func for func in funcs}
+    # see timeit_namespace explanation at end of file
+    timeit_namespace = {fn.__name__:fn for fn in fns}
 
     results = []
-    # i categorize the results by datapoint instead of by function for readability, mostly
+    # categorize the results by datapoint instead of by function
+    # makes comparing algorithm efficiency much smoother
     for point in data:
-        pointResults = []
+        point_results = []
 
-        for func in funcs:
-            # timeit basically runs exec(timeitStatement)
-            timeitStatement = f"{func.__name__}({repr(point)})"
+        for fn in fns:
+            # timeit basically runs exec(timeit_statement)
+            timeit_statement = f"{fn.__name__}({repr(point[0])})"
             # this is where the calculation actually happens
-            duration = timeit(timeitStatement, number=loops, globals=timeitNamespace)
+            duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
             duration = round(duration, digits)
-            # to get the function output i have to just run it again
-            # not ideal for slow functions.
-            # TODO: a decorator that saves output to pass to timing functions?
-            output = func(point)
-            if verification:
-                if output == verificationData:
-                    pointResults.append((duration, func.__name__, output, True))
-                else:
-                    pointResults.append((duration, func.__name__, output, False))
-            else:
-                pointResults.append((duration, func.__name__, output))
+            # to get the function output, just run it again
+            # not ideal for slow algs.
+            output = fn(point[0])
+            fn_result = [duration, fn.__name__, output]
+            # TODO: checking classify only needs to happen once
+            if classify:
+                fn_result.append(output == point[-1])
+            point_results.append(fn_result)
 
-        pointResults.sort()
-        results.append((point,pointResults))
+        # (sorted by duration)
+        results.append( (point, sorted(point_results)) )
 
         # printing the output
-        if not skipIO:
+        if not skip_print:
             suffix = 's' if loops != 1 else ''
-            if verification:
-                print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
-                # the key function here sorts by the last element (correctness) instead of the first (duration)
-                for duration, funcName, output, correctness in sorted(pointResults, key=lambda x: x[-1], reverse=True):
-                    if correctness:
-                        print(f"    {funcName} successfully yielded {output} in {duration} seconds")
-                    else:
-                        print(f"    {funcName} failed to yield {output} in {duration} seconds")
+            print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
+            if classify:
+                # key sorts by the last element (correctness) instead of the first (duration)
+                for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
+                    print(f"    {correctness}: {fn_name} yielded {output} in {duration} seconds")
             else:
-                print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
-                for duration, funcName, output in pointResults:
-                    print(f"    {funcName} yielded {output} in {duration} seconds")
+                for duration, fn_name, output in point_results:
+                    print(f"    {fn_name} yielded {output} in {duration} seconds")
 
     return results
 
