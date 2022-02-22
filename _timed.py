@@ -3,31 +3,37 @@
 from timeit import timeit
 
 
-# def round_duration(duration: float):
-#     if duration > 60.0:
-#         mins, seconds = divmod(f, 60.0)
-#         return f"{mins}m {round(seconds)}s"
-#     if duration * 10**9 < 1.0:
-#         return f"{duration * 10**12}ps"
-#     if duration * 10**6 < 1.0:
-#         return f"{duration * 10**9}ns"
-#     if duration * 10**3 < 1.0:
-#         return f"{duration * 10**6}μs"
-#     if duration < 1.0:
-#         return f"{duration * 10**3}ms"
-#     else:
-#         return f"{duration}s"
+# python does a little of this with scientific notation but I like the unit notation
+def format_duration(duration: float):
+    """converts float timing data to SI units
 
+    Args:
+        duration (float): to convert
+
+    Returns:
+        str: duration in SI units
+    """
+    if duration > 60.0:
+        mins, seconds = divmod(f, 60.0)
+        return f"{mins}m {round(seconds)}s"
+    if duration * 10**6 < 1.0:
+            if duration * 10**9 < 1.0:
+                return f"{duration * 10**12}ps"
+        return f"{duration * 10**9}ns"
+    if duration * 10**3 < 1.0:
+        return f"{duration * 10**6}μs"
+    if duration < 1.0:
+        return f"{duration * 10**3}ms"
+    return f"{duration}s"
 
 
 # this has become more useful than batch
 # still best to use batch for bulk comparisons
 def timed(fn):
-    """decorator wrapper for timing function runtime in-file.
+    """timeit decorator wrapper
 
     RESERVED KWARGS:
-    loops (int, for timeit loops), 
-    digits (int, for rounding), 
+    loops (int, for timeit loops),
     skip_print (bool, to skip console output), 
     classify, and classifier (bool and any, to check output against)
 
@@ -36,7 +42,7 @@ def timed(fn):
 
     Runtime: O(loops)
     """
-    def inner(*args, loops=100000, digits=5, skip_print=False, classify=False, classifier=None, **kwargs):
+    def inner(*args, loops=100000, skip_print=False, classify=False, classifier=None, **kwargs):
         # see timeit_namespace explanation at end of file
         timeit_namespace = {fn.__name__:fn, 'args':args, 'kwargs':kwargs}
         # timeit basically does exec(timeit_statement)
@@ -73,37 +79,20 @@ def timed(fn):
             # print the (rounded) time
             suffix = 's' if loops != 1 else ''
 
-            duration = round(timeit(timeit_statement, globals=timeit_namespace, number=loops), digits)
+            duration = format_duration(timeit(timeit_statement, globals=timeit_namespace, number=loops))
             print(f"    Execution time over {loops} iteration{suffix}: {duration}s")
         return duration
     return inner
 
 
-# def compare(fns, data, classifiers, unpack_data=False, loops=100000):
-#     fns = [timed(fn) for fn in fns]
-
-#     if not unpack_data:
-#         res = [(fn(point, skip_print=True, classify=True, classifier=classifier), point, classifier)
-#                     for point, classifier in zip(data, classifiers, strict=True)
-#                     for fn in fns]
-#     else:
-#         res = [(fn(*point, skip_print=True, classify=True, classifier=classifier), point, classifier)
-#                     for point, classifier in zip(data, classifiers, strict=True)
-#                     for fn in fns]
-
-#     for r in res:
-#         print(f"")
-
-
-def batch(data, *fns, loops=100000, digits=5, skip_print=False, classify=False, unpack_data=False):
+def batch(data, fns, loops=100000, skip_print=False, classify=False, classifiers=None, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
         data (list): of points as function input
-        *fns (function): s to evaluate
+        fns (iterable[function]): to evaluate
         loops (int, optional): of iterations (for runtime calc)
                            per datapoint per function. Defaults to 100000.
-        digits (int, optional): of digits to round output with. Defaults to 5.
         skip_print (bool, optional): skip printing output? Defaults to False.
         classify (bool, optional): check output correctness against
                             the last member of each data point? Defaults to false.
@@ -120,20 +109,28 @@ def batch(data, *fns, loops=100000, digits=5, skip_print=False, classify=False, 
     for point in data:
         point_results = []
 
-        for fn in fns:
-            # timeit basically runs exec(timeit_statement)
-            timeit_statement = f"{fn.__name__}({repr(point[0])})"
-            # this is where the calculation actually happens
-            duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
-            duration = round(duration, digits)
-            # to get the function output, just run it again
-            # not ideal for slow algs.
-            output = fn(point[0])
-            fn_result = [duration, fn.__name__, output]
-            # TODO: checking classify only needs to happen once
-            if classify:
-                fn_result.append(output == point[-1])
-            point_results.append(fn_result)
+        # checking classify/unpack_data only needs to happen once, but it would duplicate so much code
+        if classify:
+            for fn, classifier in zip(fns, classifiers, strict=True):
+                # timeit basically runs exec(timeit_statement)
+                if not unpack_data:
+                    timeit_statement = f"{fn.__name__}({repr(point)})"
+                else:
+                    timeit_statement = f"{fn.__name__}(*{repr(point)}"
+                # this is where the calculation actually happens
+                duration = format_duration(timeit(timeit_statement, number=loops, globals=timeit_namespace))
+                # to get the function output, just run it again
+                # not ideal for slow algs.
+                output = fn(point)
+                fn_result = [duration, fn.__name__, output, output == classifier]
+                point_results.append(fn_result)
+
+        # same as above minus output == classifier in fn_result
+        else:
+            for fn in fns:
+                timeit_statement = f"{fn.__name__}(*{repr(point)}" if unpack_data else f"{fn.__name__}({repr(point)})"
+                duration = format_duration(timeit(timeit_statement, number=loops, globals=timeit_namespace))
+                point_results.append([duration, fn.__name__, fn(point)])
 
         # (sorted by duration)
         results.append( (point, sorted(point_results)) )

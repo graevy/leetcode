@@ -1,4 +1,4 @@
-from _timed import timeBatch
+from _timed import batch
 
 
 # first successful solution
@@ -58,7 +58,7 @@ data = [
 ]
 
 if __name__ == '__main__':
-    timeBatch(data, disjoint4, disjoint5)
+    batch(data, disjoint4, disjoint5)
 
 
 # # initial "solution"

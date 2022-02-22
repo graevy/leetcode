@@ -1,4 +1,4 @@
-from _timed import timeBatch
+from _timed import batch
 
 # my initial answer
 def gray(n):
@@ -23,7 +23,7 @@ def bestgray(n):
 
 if __name__ == '__main__':
     data = [x for x in range(8)[1:]]
-    timeBatch(data, gray, gray2, bestgray)
+    batch(data, gray, gray2, bestgray)
 
 
 # 0

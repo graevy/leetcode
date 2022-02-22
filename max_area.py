@@ -98,5 +98,5 @@ data = [
     [1,2,1]
     ]
 
-_timed.timeBatch(data, max_area_4, max_area_5, loops=10000)
+_timed.batch(data, max_area_4, max_area_5, loops=10000)
 # print(max_area_5(data[-1]))
