@@ -34,16 +34,17 @@ def format_time(duration: float, precision=5):
         return res
 
     duration_digits = math.log(duration, 10)
-    # packing -precision inside abs fixes the case where 1 <= duration < 60
-    rounding_digits = abs(math.ceil(duration_digits) - precision)
 
     magnitude = math.floor(duration_digits)
-    magnitude -= magnitude % 3
+    magnitude -= magnitude % 3 # comes from log(1000,10)
+
+    # packing -precision inside abs fixes the case where 1 <= duration < 60
+    rounding_digits = abs(math.ceil(duration_digits) - precision) + magnitude
 
     magnitudes = {0:'s', -3:'ms', -6:'μs', -9:'ns', -12:'ps', -15:'fs', -18:'as', -21:'zs', -24:'ys'}
     unit = magnitudes[magnitude]
 
-    return str(round(duration*10**(-magnitude), rounding_digits + (magnitude))) + unit
+    return str(round(duration * 10**-magnitude, rounding_digits)) + unit
 
 
 # this has become more useful than batch
