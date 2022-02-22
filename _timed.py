@@ -19,19 +19,20 @@ def format_time(duration: float, precision=5):
     """
     if duration == 0.0: return '0.0s'
 
+    # switch from SI units for large values. it's not a seamless transition
     # divmod preserves duration's type,
     # annoyingly necessitating casting floats already equal to ints
     if duration >= 60:
-        res = ''
+        time_str = ''
         if duration >= 3600:
             if duration >= 86400:
                 days, duration = divmod(duration, 86400)
-                res += f"{int(days)}d "
+                time_str += f"{int(days)}d "
             hours, duration = divmod(duration, 3600)
-            res += f"{int(hours)}h "
+            time_str += f"{int(hours)}h "
         minutes, seconds = divmod(duration, 60)
-        res += f'{int(minutes)}m {round(seconds, precision)}s'
-        return res
+        time_str += f'{int(minutes)}m {round(seconds, precision)}s'
+        return time_str
 
     duration_digits = math.log(duration, 10)
 
