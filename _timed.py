@@ -151,9 +151,6 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
                 duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
                 point_results.append([duration, fn.__name__, fn(point)])
 
-        # (sorted by duration)
-        results.append( (point, sorted(point_results)) )
-
         # printing the output
         if not skip_print:
             suffix = 's' if loops != 1 else ''
@@ -165,6 +162,8 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
             else:
                 for duration, fn_name, output in point_results:
                     print(f"    {fn_name} yielded {output} in {duration}")
+        else:
+            results.append( (point, point_results) )
 
     return results
 
