@@ -77,9 +77,9 @@ def timed(fn):
             # checking correctness. i opted for 2 vars incase output is None, False, etc
             if classify:
                 if output == classifier:
-                    print(f"function {fn.__name__}: SUCCESS")
+                    print(f"function {fn.__name__}: Passed")
                 else:
-                    print(f"function {fn.__name__}: FAILURE. "+\
+                    print(f"function {fn.__name__}: Failed. "+\
                           f"Expected type {type(classifier)}: {repr(classifier)}")
             else:
                 print(f"function {fn.__name__}:")
@@ -106,7 +106,7 @@ def timed(fn):
     return inner
 
 
-# checking classify/unpack_data only needs to happen once, but it'd bloat this whale of a function
+# checking unpack_data/skip_print only needs to happen once, but it'd bloat this whale of a function even harder
 def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifiers=None, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
@@ -124,6 +124,9 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
     """
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
+    suffix = 's' if loops != 1 else ''
+    if not skip_print:
+        print(f"Runtimes over {loops} loop{'s' if loops != 1 else ''}: ")
 
     results = []
     # categorize the results by datapoint instead of by function
@@ -134,34 +137,23 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
 
             for fn in fns:
                 if not unpack_data:
-                    timeit_statement = f"{fn.__name__}({repr(point)})"
+                    timeit_statement = f"""{fn.__name__}({repr(point)})"""
                 else:
-                    timeit_statement = f"{fn.__name__}(*{repr(point)}"
+                    timeit_statement = f"""{fn.__name__}(*{repr(point)}"""
 
                 duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
 
                 output = fn(point)
-                fn_result = [duration, fn.__name__, output, output == classifier]
+                fn_result = (duration, fn.__name__, output, output == classifier)
                 point_results.append(fn_result)
-
-        # same as above minus output == classifier in fn_result
-        # else:
-        #     for fn in fns:
-        #         timeit_statement = f"{fn.__name__}(*{repr(point)}" if unpack_data else f"{fn.__name__}({repr(point)})"
-        #         duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
-        #         point_results.append([duration, fn.__name__, fn(point)])
 
             # printing the output
             if not skip_print:
-                suffix = 's' if loops != 1 else ''
-                print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
-                if classify:
-                    # key sorts by the last element (correctness) instead of the first (duration)
-                    for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
-                        print(f"    {"✓" if correctness else "X"}: {fn_name} yielded {output} in {duration}")
-                else:
-                    for duration, fn_name, output in point_results:
-                        print(f"    {fn_name} yielded {output} in {duration}")
+                print(f"    Point {repr(point)}:")
+                # key sorts by the last element (correctness) instead of the first (duration)
+                for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
+                    print(f"        {fn_name} {'Passed' if correctness else 'Failed'}: {output} in {duration}")
+
             results.append( (point, point_results) )
 
     else:
@@ -177,14 +169,14 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
                 duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
 
                 output = fn(point)
-                fn_result = [duration, fn.__name__, output]
+                fn_result = (duration, fn.__name__, output)
                 point_results.append(fn_result)
 
             if not skip_print:
                 suffix = 's' if loops != 1 else ''
-                print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
+                print(f"    Point {repr(point)}:")
                 for duration, fn_name, output in point_results:
-                    print(f"    {fn_name} yielded {output} in {duration}")
+                    print(f"        {fn_name} yielded {output} in {duration}")
 
             results.append( (point, point_results) )
 
