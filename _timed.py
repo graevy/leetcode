@@ -1,30 +1,49 @@
 # simple tools to time algorithm execution and verify output
 
+import math
 from timeit import timeit
 
 
 # python does a little of this with scientific notation but I like the unit notation
-def format_duration(duration: float):
-    """converts float timing data to SI units
+# standard time modules are a little frustrating, strftime() being the only thing coming close
+# this was really fun to code. 
+def format_time(duration: float, precision=5):
+    """converts timeit output to SI (and sanctioned non-SI) units
 
     Args:
         duration (float): to convert
+        precision (int): digits to round to
 
     Returns:
-        str: duration in SI units
+        str: (d* hh mm ss)|(ms|μs|...|ys)
     """
-    if duration > 60.0:
-        mins, seconds = divmod(f, 60.0)
-        return f"{mins}m {round(seconds)}s"
-    if duration * 10**6 < 1.0:
-            if duration * 10**9 < 1.0:
-                return f"{duration * 10**12}ps"
-        return f"{duration * 10**9}ns"
-    if duration * 10**3 < 1.0:
-        return f"{duration * 10**6}μs"
-    if duration < 1.0:
-        return f"{duration * 10**3}ms"
-    return f"{duration}s"
+    if duration == 0.0: return '0.0s'
+
+    # divmod preserves duration's type,
+    # annoyingly necessitating casting floats already equal to ints
+    if duration >= 60:
+        res = ''
+        if duration >= 3600:
+            if duration >= 86400:
+                days, duration = divmod(duration, 86400)
+                res += f"{int(days)}d "
+            hours, duration = divmod(duration, 3600)
+            res += f"{int(hours)}h "
+        minutes, seconds = divmod(duration, 60)
+        res += f'{int(minutes)}m {round(seconds, precision)}s'
+        return res
+
+    duration_digits = math.log(duration, 10)
+    # packing -precision inside abs fixes the case where 1 <= duration < 60
+    rounding_digits = abs(math.ceil(duration_digits) - precision)
+
+    magnitude = math.floor(duration_digits)
+    magnitude -= magnitude % 3
+
+    magnitudes = {0:'s', -3:'ms', -6:'μs', -9:'ns', -12:'ps', -15:'fs', -18:'as', -21:'zs', -24:'ys'}
+    unit = magnitudes[magnitude]
+
+    return str(round(duration*10**(-magnitude), rounding_digits + (magnitude))) + unit
 
 
 # this has become more useful than batch
@@ -40,7 +59,7 @@ def timed(fn):
     Args:
         fn (function): to time
 
-    Runtime: O(loops)
+    Time: O(loops)
     """
     def inner(*args, loops=100000, skip_print=False, classify=False, classifier=None, **kwargs):
         # see timeit_namespace explanation at end of file
@@ -79,26 +98,27 @@ def timed(fn):
             # print the (rounded) time
             suffix = 's' if loops != 1 else ''
 
-            duration = format_duration(timeit(timeit_statement, globals=timeit_namespace, number=loops))
+            duration = format_time(timeit(timeit_statement, globals=timeit_namespace, number=loops))
             print(f"    Execution time over {loops} iteration{suffix}: {duration}s")
         return duration
     return inner
 
 
-def batch(data, fns, loops=100000, skip_print=False, classify=False, classifiers=None, unpack_data=False):
+# checking classify/unpack_data only needs to happen once, but it'd bloat this whale of a function
+def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifiers=None, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
-        data (list): of points as function input
-        fns (iterable[function]): to evaluate
+        data (iterable): of points as function input
+        *fns (iterable[function]): to evaluate
         loops (int, optional): of iterations (for runtime calc)
-                           per datapoint per function. Defaults to 100000.
-        skip_print (bool, optional): skip printing output? Defaults to False.
-        classify (bool, optional): check output correctness against
-                            the last member of each data point? Defaults to false.
+                           per function per datapoint. Defaults to 100000.
+        skip_print (bool, optional): ing output? Defaults to False.
+        classify (bool, optional): check output correctness against classifiers? Defaults to false.
+        classifiers (iterable): for classification. len must equal len(data)
         unpack_data (bool, optional): for fn(*point) instead of fn(point)
 
-    Runtime: O(data*fns*loops)
+    Time: O(data*fns*loops)
     """
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
@@ -109,18 +129,15 @@ def batch(data, fns, loops=100000, skip_print=False, classify=False, classifiers
     for point in data:
         point_results = []
 
-        # checking classify/unpack_data only needs to happen once, but it would duplicate so much code
         if classify:
             for fn, classifier in zip(fns, classifiers, strict=True):
-                # timeit basically runs exec(timeit_statement)
                 if not unpack_data:
                     timeit_statement = f"{fn.__name__}({repr(point)})"
                 else:
                     timeit_statement = f"{fn.__name__}(*{repr(point)}"
-                # this is where the calculation actually happens
-                duration = format_duration(timeit(timeit_statement, number=loops, globals=timeit_namespace))
-                # to get the function output, just run it again
-                # not ideal for slow algs.
+
+                duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
+
                 output = fn(point)
                 fn_result = [duration, fn.__name__, output, output == classifier]
                 point_results.append(fn_result)
@@ -129,7 +146,7 @@ def batch(data, fns, loops=100000, skip_print=False, classify=False, classifiers
         else:
             for fn in fns:
                 timeit_statement = f"{fn.__name__}(*{repr(point)}" if unpack_data else f"{fn.__name__}({repr(point)})"
-                duration = format_duration(timeit(timeit_statement, number=loops, globals=timeit_namespace))
+                duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
                 point_results.append([duration, fn.__name__, fn(point)])
 
         # (sorted by duration)
@@ -142,10 +159,10 @@ def batch(data, fns, loops=100000, skip_print=False, classify=False, classifiers
             if classify:
                 # key sorts by the last element (correctness) instead of the first (duration)
                 for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
-                    print(f"    {correctness}: {fn_name} yielded {output} in {duration} seconds")
+                    print(f"    {correctness}: {fn_name} yielded {output} in {duration}")
             else:
                 for duration, fn_name, output in point_results:
-                    print(f"    {fn_name} yielded {output} in {duration} seconds")
+                    print(f"    {fn_name} yielded {output} in {duration}")
 
     return results
 
