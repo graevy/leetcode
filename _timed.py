@@ -128,11 +128,11 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
     results = []
     # categorize the results by datapoint instead of by function
     # makes comparing algorithm efficiency much smoother
-    for point in data:
-        point_results = []
+    if classify:
+        for point, classifier in zip(data, classifiers, strict=True):
+            point_results = []
 
-        if classify:
-            for fn, classifier in zip(fns, classifiers, strict=True):
+            for fn in fns:
                 if not unpack_data:
                     timeit_statement = f"{fn.__name__}({repr(point)})"
                 else:
@@ -145,24 +145,47 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
                 point_results.append(fn_result)
 
         # same as above minus output == classifier in fn_result
-        else:
-            for fn in fns:
-                timeit_statement = f"{fn.__name__}(*{repr(point)}" if unpack_data else f"{fn.__name__}({repr(point)})"
-                duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
-                point_results.append([duration, fn.__name__, fn(point)])
+        # else:
+        #     for fn in fns:
+        #         timeit_statement = f"{fn.__name__}(*{repr(point)}" if unpack_data else f"{fn.__name__}({repr(point)})"
+        #         duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
+        #         point_results.append([duration, fn.__name__, fn(point)])
 
-        # printing the output
-        if not skip_print:
-            suffix = 's' if loops != 1 else ''
-            print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
-            if classify:
-                # key sorts by the last element (correctness) instead of the first (duration)
-                for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
-                    print(f"    {correctness}: {fn_name} yielded {output} in {duration}")
-            else:
+            # printing the output
+            if not skip_print:
+                suffix = 's' if loops != 1 else ''
+                print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
+                if classify:
+                    # key sorts by the last element (correctness) instead of the first (duration)
+                    for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
+                        print(f"    {"✓" if correctness else "X"}: {fn_name} yielded {output} in {duration}")
+                else:
+                    for duration, fn_name, output in point_results:
+                        print(f"    {fn_name} yielded {output} in {duration}")
+            results.append( (point, point_results) )
+
+    else:
+        for point in data:
+            point_results = []
+
+            for fn in fns:
+                if not unpack_data:
+                    timeit_statement = f"{fn.__name__}({repr(point)})"
+                else:
+                    timeit_statement = f"{fn.__name__}(*{repr(point)}"
+
+                duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
+
+                output = fn(point)
+                fn_result = [duration, fn.__name__, output]
+                point_results.append(fn_result)
+
+            if not skip_print:
+                suffix = 's' if loops != 1 else ''
+                print(f"Runtimes for datapoint {point} over {loops} iteration{suffix}:")
                 for duration, fn_name, output in point_results:
                     print(f"    {fn_name} yielded {output} in {duration}")
-        else:
+
             results.append( (point, point_results) )
 
     return results
