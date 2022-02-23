@@ -1,3 +1,4 @@
+# this is one to come back to
 class Solution:
     def longestValidParentheses(self, s: str) -> int:
         res = 0
@@ -14,18 +15,16 @@ class Solution:
                 parentheses_to_close -= 1
             else: continue
             current += 1
-            res = max(res, current)
-        return res
+            res = max(res - parentheses_to_close, current)
+        return res - parentheses_to_close
                 
 
 
 import _timed
 
-data = [("", 0), ("((())", 4), ("()()", 2), ("(", 0), (")", 0), ("()(())((()))(())",6),
-        ("((((()((()))", 6)]
+data = ["", "((())", "()()", "(", ")", "()(())((()))(())",
+        "((((()((()))"]
 
-@_timed.timed
-def main():
-    global data
-    for point in data:
-        
+classifiers = [0, 4, 2, 0, 0, 6, 6]
+
+_timed.batch(data, Solution().longestValidParentheses, classify=True, classifiers=classifiers)
