@@ -101,7 +101,7 @@ def timed(fn):
             suffix = 's' if loops != 1 else ''
 
             duration = format_time(timeit(timeit_statement, globals=timeit_namespace, number=loops))
-            print(f"    Time over {loops} iteration{suffix}: {duration}s")
+            print(f"    Time over {loops} iteration{suffix}: {duration}")
         return duration
     return inner
 
