@@ -79,8 +79,8 @@ def timed(fn):
                 if output == classifier:
                     print(f"function {fn.__name__}: Passed")
                 else:
-                    print(f"function {fn.__name__}: Failed. "+\
-                          f"Expected type {type(classifier)}: {repr(classifier)}")
+                    print(f"function {fn.__name__}: Failed.",
+                          f"Expected {repr(classifier)}: {type,(classifier)}")
             else:
                 print(f"function {fn.__name__}:")
 
@@ -101,7 +101,7 @@ def timed(fn):
             suffix = 's' if loops != 1 else ''
 
             duration = format_time(timeit(timeit_statement, globals=timeit_namespace, number=loops))
-            print(f"    Execution time over {loops} iteration{suffix}: {duration}s")
+            print(f"    Time over {loops} iteration{suffix}: {duration}s")
         return duration
     return inner
 
