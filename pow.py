@@ -37,6 +37,7 @@ class Solution:
         for _ in range(x.bit_length()-1):
             msb *= 2
         return msb
+
     # make the worst alg first
     @_timed.timed
     def myPow(self, x: float, n: int) -> float:
@@ -48,12 +49,15 @@ class Solution:
     
     # i think this counts as log(n)
     # actually disappointed by how slow this is
+
+    # first submission success :) 59th speed, 99th memory
+    # shoutout to the 10% of submissions that were just "return x**n"
     @_timed.timed
     def my_pow_2(self, x, n):
         if n == 0: return 1
 
         negative = True if n < 0 else False
-        x = abs(x)
+        n = abs(n)
         base = x
         out = 1
         while n > 0:
@@ -66,6 +70,7 @@ class Solution:
         return 1/out if negative else out
 
     
-
-Solution().myPow(5,240)
-Solution().my_pow_2(5, 240)
+data = [(5,240), (-3,7), (13,-12), (2,10), (2.1,3), (2,-2), (5,0), (1,-5), (0,0)]
+classifiers = [x**y for x,y in data]
+for point,classifier in zip(data, classifiers):
+    Solution().my_pow_2(*point, classify=True, classifier=classifier)
