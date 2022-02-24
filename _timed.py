@@ -106,43 +106,46 @@ def timed(fn):
     return inner
 
 
-# checking unpack_data/skip_print only needs to happen once, but it'd bloat this whale of a function even harder
-def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifiers=None, unpack_data=False):
+# oh my god with classifiers this became so powerful
+# checking skip_print only needs to happen once, but it'd bloat this whale of a function even harder
+def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
-        data (iterable): of points as function input
+        data (iterable): of points as function arg(s)
         *fns (iterable[function]): to evaluate
-        loops (int, optional): of iterations (for runtime calc)
-                           per function per datapoint. Defaults to 100000.
+        classifiers (iterable): to verify fn output correctness.
+            type(data[i]) = type(classifiers[i]).
+            len(classifiers) = len(data). Defaults to None
+        loops (int, optional): for runtime calc,
+            per function per datapoint. Defaults to 100000.
         skip_print (bool, optional): ing output? Defaults to False.
-        classify (bool, optional): check output correctness against classifiers? Defaults to false.
-        classifiers (iterable): for classification. len must equal len(data)
         unpack_data (bool, optional): for fn(*point) instead of fn(point)
 
-    Time: O(data*fns*loops)
+    Time: O(data*fns*log(fns)*loops)
     """
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
+
     suffix = 's' if loops != 1 else ''
+    unpacker = '(*' if unpack_data else '('
+
     if not skip_print:
-        print(f"Runtimes over {loops} loop{'s' if loops != 1 else ''}: ")
+        print(f"Runtimes over {loops} loop{suffix}: ")
 
     results = []
     # categorize the results by datapoint instead of by function
     # makes comparing algorithm efficiency much smoother
-    if classify:
+    if classifiers is not None:
         for point, classifier in zip(data, classifiers, strict=True):
             point_results = []
 
             for fn in fns:
-                if not unpack_data:
-                    timeit_statement = f"""{fn.__name__}({repr(point)})"""
-                else:
-                    timeit_statement = f"""{fn.__name__}(*{repr(point)}"""
-
-                duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
-
+                # timeit will execute this statement, basically "fn(point)"
+                timeit_statement = fn.__name__ + unpacker + repr(point) + ')'
+                # here's the execution
+                duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
+                # run it again to store fn(point). could have it write to output inside the statement
                 output = fn(point)
                 fn_result = (duration, fn.__name__, output, output == classifier)
                 point_results.append(fn_result)
@@ -150,33 +153,26 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
             # printing the output
             if not skip_print:
                 print(f"    Point {repr(point)}:")
-                # key sorts by the last element (correctness) instead of the first (duration)
-                for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
-                    print(f"        {fn_name} {'Passed' if correctness else 'Failed'}: {output} in {duration}")
+                for duration, fn_name, output, correctness in sorted(point_results):
+                    print(f"        {fn_name} {'Passed' if correctness else 'Failed'}: {output} in {format_time(duration)}")
 
             results.append( (point, point_results) )
 
+    # same as above but without classification
     else:
         for point in data:
             point_results = []
-
             for fn in fns:
-                if not unpack_data:
-                    timeit_statement = f"{fn.__name__}({repr(point)})"
-                else:
-                    timeit_statement = f"{fn.__name__}(*{repr(point)}"
-
-                duration = format_time(timeit(timeit_statement, number=loops, globals=timeit_namespace))
-
+                timeit_statement = fn.__name__ + unpacker + repr(point) + ')'
+                duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
                 output = fn(point)
                 fn_result = (duration, fn.__name__, output)
                 point_results.append(fn_result)
 
             if not skip_print:
-                suffix = 's' if loops != 1 else ''
                 print(f"    Point {repr(point)}:")
                 for duration, fn_name, output in point_results:
-                    print(f"        {fn_name} yielded {output} in {duration}")
+                    print(f"        {fn_name} yielded {output} in {format_time(duration)}")
 
             results.append( (point, point_results) )
 
@@ -184,11 +180,11 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
 
 
 # timeit operates in its own namespace. this is a huge
-# (but necessary) headache to achieve greater timing accuracy.
-# but you can import another namespace with its globals() param.
+# (but necessary) headache for timing accuracy,
+# but you can import another namespace with its globals param.
 # this requires all calling functions to import their globals() as an arg.
 # i've circumvented this by making a dict to pass as a namespace to timeit.
-# it's maybe easier to conceptualize this as timeit's __init__ method
+# it's maybe easier to conceptualize this as timeit's __init__ method?
 
 # a previous version used timeit's setup param to import calling modules
 # into timeit's namespace by examining the stack.
