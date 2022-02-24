@@ -107,7 +107,7 @@ def timed(fn):
 
 
 # checking skip_print only needs to happen once, but it'd bloat this whale of a function even harder
-def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifiers=None, unpack_data=False):
+def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
@@ -116,8 +116,7 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
         loops (int, optional): of iterations (for runtime calc)
                            per function per datapoint. Defaults to 100000.
         skip_print (bool, optional): ing output? Defaults to False.
-        classify (bool, optional): check output correctness against classifiers? Defaults to false.
-        classifiers (iterable): for classification. len must equal len(data)
+        classifiers (iterable): to verify output correctness. len must equal len(data)
         unpack_data (bool, optional): for fn(*point) instead of fn(point)
 
     Time: O(data*fns*loops)
@@ -134,7 +133,7 @@ def batch(data, *fns, loops=100000, skip_print=False, classify=False, classifier
     results = []
     # categorize the results by datapoint instead of by function
     # makes comparing algorithm efficiency much smoother
-    if classify:
+    if classifiers is not None:
         for point, classifier in zip(data, classifiers, strict=True):
             point_results = []
 
