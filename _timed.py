@@ -106,20 +106,23 @@ def timed(fn):
     return inner
 
 
+# oh my god with classifiers this became so powerful
 # checking skip_print only needs to happen once, but it'd bloat this whale of a function even harder
 def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
-        data (iterable): of points as function input
+        data (iterable): of points as function arg(s)
         *fns (iterable[function]): to evaluate
-        loops (int, optional): of iterations (for runtime calc)
-                           per function per datapoint. Defaults to 100000.
+        classifiers (iterable): to verify fn output correctness.
+            type(data[i]) = type(classifiers[i]).
+            len(classifiers) = len(data). Defaults to None
+        loops (int, optional): for runtime calc,
+            per function per datapoint. Defaults to 100000.
         skip_print (bool, optional): ing output? Defaults to False.
-        classifiers (iterable): to verify output correctness. len must equal len(data)
         unpack_data (bool, optional): for fn(*point) instead of fn(point)
 
-    Time: O(data*fns*loops)
+    Time: O(data*fns*log(fns)*loops)
     """
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
@@ -138,10 +141,11 @@ def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_d
             point_results = []
 
             for fn in fns:
+                # timeit will execute this statement, basically "fn(point)"
                 timeit_statement = fn.__name__ + unpacker + repr(point) + ')'
-
+                # here's the execution
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
-
+                # run it again to store fn(point). could have it write to output inside the statement
                 output = fn(point)
                 fn_result = (duration, fn.__name__, output, output == classifier)
                 point_results.append(fn_result)
@@ -149,21 +153,18 @@ def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_d
             # printing the output
             if not skip_print:
                 print(f"    Point {repr(point)}:")
-                # sort by the last element (correctness) instead of the first (duration)
-                for duration, fn_name, output, correctness in sorted(point_results, key=lambda x: x[-1], reverse=True):
+                for duration, fn_name, output, correctness in sorted(point_results):
                     print(f"        {fn_name} {'Passed' if correctness else 'Failed'}: {output} in {format_time(duration)}")
 
             results.append( (point, point_results) )
 
+    # same as above but without classification
     else:
         for point in data:
             point_results = []
-
             for fn in fns:
                 timeit_statement = fn.__name__ + unpacker + repr(point) + ')'
-
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
-
                 output = fn(point)
                 fn_result = (duration, fn.__name__, output)
                 point_results.append(fn_result)
@@ -179,11 +180,11 @@ def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_d
 
 
 # timeit operates in its own namespace. this is a huge
-# (but necessary) headache to achieve greater timing accuracy.
-# but you can import another namespace with its globals() param.
+# (but necessary) headache for timing accuracy,
+# but you can import another namespace with its globals param.
 # this requires all calling functions to import their globals() as an arg.
 # i've circumvented this by making a dict to pass as a namespace to timeit.
-# it's maybe easier to conceptualize this as timeit's __init__ method
+# it's maybe easier to conceptualize this as timeit's __init__ method?
 
 # a previous version used timeit's setup param to import calling modules
 # into timeit's namespace by examining the stack.
