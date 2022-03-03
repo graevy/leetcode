@@ -1,4 +1,4 @@
-from _timed import timed
+from timing import timed
 
 @timed
 # first try! i'm getting better

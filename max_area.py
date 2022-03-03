@@ -1,4 +1,4 @@
-import _timed
+import timing
 
 
 def calc_area(arr, idx_i, idx_j):
@@ -98,5 +98,5 @@ data = [
     [1,2,1]
     ]
 
-_timed.batch(data, max_area_4, max_area_5, loops=10000)
+timing.batch(data, max_area_4, max_area_5, loops=10000)
 # print(max_area_5(data[-1]))

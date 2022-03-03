@@ -26,7 +26,7 @@
 #     -10**4 <= x**n <= 10**4
 
 import math
-import _timed
+import timing
 
 class Solution:
     @staticmethod
@@ -39,7 +39,7 @@ class Solution:
         return msb
 
     # make the worst alg first
-    @_timed.timed
+    @timing.timed
     def myPow(self, x: float, n: int) -> float:
         if n == 0: return 1
         base = x
@@ -52,7 +52,7 @@ class Solution:
 
     # first submission success :) 59th speed, 99th memory
     # shoutout to the 10% of submissions that were just "return x**n"
-    @_timed.timed
+    @timing.timed
     def my_pow_2(self, x, n):
         if n == 0: return 1
 

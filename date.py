@@ -1,4 +1,4 @@
-import _timed
+import timing
 from itertools import permutations
 
 
@@ -18,7 +18,7 @@ def year(date):
     return date.year
 
 # you know, this actually fails one of the test cases
-@_timed.timed
+@timing.timed
 def distance1(date1, date2):
     # MMDDYYYY
     if abs(year(date1) - year(date2)) <= 1:
@@ -45,7 +45,7 @@ def distance1(date1, date2):
                 return -1
     return 1
 
-@_timed.timed
+@timing.timed
 def distance2(date1, date2):
     date1float = date1.day + date1.month/32 + date1.year/366
     date2float = date2.day + date2.month/32 + date2.year/366

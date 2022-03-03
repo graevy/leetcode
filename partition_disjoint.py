@@ -1,4 +1,4 @@
-from _timed import batch
+from timing import batch
 
 
 # first successful solution

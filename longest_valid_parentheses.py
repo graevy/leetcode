@@ -20,11 +20,11 @@ class Solution:
                 
 
 
-import _timed
+import timing
 
 data = ["", "((())", "()()", "(", ")", "()(())((()))(())",
         "((((()((()))"]
 
 classifiers = [0, 4, 2, 0, 0, 6, 6]
 
-_timed.batch(data, Solution().longestValidParentheses, classify=True, classifiers=classifiers)
+timing.batch(data, Solution().longestValidParentheses, classify=True, classifiers=classifiers)
