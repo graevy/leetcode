@@ -108,12 +108,12 @@ def timed(fn):
 
 # oh my god with classifiers this became so powerful
 # checking skip_print only needs to happen once, but it'd bloat this whale of a function even harder
-def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
+def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
+        fns (iterable[function]): to evaluate
         data (iterable): of points as function arg(s)
-        *fns (iterable[function]): to evaluate
         classifiers (iterable): to verify fn output correctness.
             type(data[i]) = type(classifiers[i]).
             len(classifiers) = len(data). Defaults to None
@@ -123,6 +123,8 @@ def batch(data, *fns, classifiers=None, loops=100000, skip_print=False, unpack_d
         unpack_data (bool, optional): for fn(*point) instead of fn(point)
 
     Time: O(data*fns*log(fns)*loops)
+
+    Returns: results (list[tuple]): (point, [result, fn name, output, correctness]) tuples
     """
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}

@@ -27,4 +27,4 @@ data = ["", "((())", "()()", "(", ")", "()(())((()))(())",
 
 classifiers = [0, 4, 2, 0, 0, 6, 6]
 
-timing.batch(data, Solution().longestValidParentheses, classify=True, classifiers=classifiers)
+timing.batch(Solution().longestValidParentheses, data=data, classify=True, classifiers=classifiers)

@@ -1,5 +1,3 @@
-from timing import batch
-
 # my initial answer
 def gray(n):
     out = [0,1]
@@ -21,9 +19,10 @@ def bestgray(n):
     return [i^i>>1 for i in range(2**n)]
 
 
-if __name__ == '__main__':
-    data = [x for x in range(8)[1:]]
-    batch(data, gray, gray2, bestgray)
+from timing import batch
+
+data = [x for x in range(8)[1:]]
+batch(fns=[gray, gray2, bestgray], data=data)
 
 
 # 0

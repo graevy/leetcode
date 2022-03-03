@@ -98,5 +98,5 @@ data = [
     [1,2,1]
     ]
 
-timing.batch(data, max_area_4, max_area_5, loops=10000)
+timing.batch(data=data, fns=[max_area_4, max_area_5], loops=10000)
 # print(max_area_5(data[-1]))

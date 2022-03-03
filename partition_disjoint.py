@@ -58,7 +58,7 @@ data = [
 ]
 
 if __name__ == '__main__':
-    batch(data, disjoint4, disjoint5)
+    batch([disjoint4, disjoint5], data)
 
 
 # # initial "solution"
