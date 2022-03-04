@@ -42,6 +42,7 @@ def format_time(duration: float, precision=5):
     # packing -precision inside abs fixes the case where 1 <= duration < 60
     rounding_digits = abs(math.ceil(duration_digits) - precision) + magnitude
 
+    # this would probably be faster with structural pattern matching
     magnitudes = {0:'s', -3:'ms', -6:'μs', -9:'ns', -12:'ps', -15:'fs', -18:'as', -21:'zs', -24:'ys'}
     unit = magnitudes[magnitude]
 
@@ -108,6 +109,7 @@ def timed(fn):
 
 # oh my god with classifiers this became so powerful
 # checking skip_print only needs to happen once, but it'd bloat this whale of a function even harder
+# it's O(data), but because the function is O(data*fns*log(fns)*loops), it's basically nothing
 def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
@@ -124,16 +126,18 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
 
     Time: O(data*fns*log(fns)*loops)
 
-    Returns: results (list[tuple]): (point, [result, fn name, output, correctness]) tuples
+    Returns: results: list[tuple(   data[i], [result,fn,output,correctness]   )]
     """
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
 
-    suffix = 's' if loops != 1 else ''
     unpacker = '(*' if unpack_data else '('
 
     if not skip_print:
-        print(f"Runtimes over {loops} loop{suffix}: ")
+        spacing = " " * 10
+        suffix = 's' if loops != 1 else ''
+
+        print(f"\nRuntimes over {loops} loop{suffix}: ")
 
     results = []
     # categorize the results by datapoint instead of by function
@@ -142,21 +146,34 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
         for point, classifier in zip(data, classifiers, strict=True):
             point_results = []
 
+            # do this before timing; point might be mutated
+            if not skip_print:
+                print(f"    Point {repr(point)}: {type(point)}:")
+
             for fn in fns:
-                # timeit will execute this statement, basically "fn(point)"
+                # timeit will execute this statement, which is basically "fn(point)"
                 timeit_statement = fn.__name__ + unpacker + repr(point) + ')'
                 # here's the execution
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
-                # run it again to store fn(point). could have it write to output inside the statement
+                # run it again to store fn(point). could have it write to output inside the statement maybe
                 output = fn(point)
                 fn_result = (duration, fn.__name__, output, output == classifier)
                 point_results.append(fn_result)
 
             # printing the output
             if not skip_print:
-                print(f"    Point {repr(point)}:")
+
                 for duration, fn_name, output, correctness in sorted(point_results):
-                    print(f"        {fn_name} {'Passed' if correctness else 'Failed'}: {output} in {format_time(duration)}")
+                    individual = format_time(duration/loops)
+                    duration = format_time(duration)
+
+                    if correctness:
+                        print(f"        Function {fn_name} ***Passed*** in {individual}/loop ({duration}):\n",
+                        spacing, f"Received {output}: {type(output)}")
+                    else:
+                        print(f"        Function {fn_name} ***Failed*** in {individual}/loop ({duration}):\n",
+                        spacing, f"Received {output}: {type(output)}\n",
+                        spacing, f"Expected {classifier}: {type(classifier)}")
 
             results.append( (point, point_results) )
 
