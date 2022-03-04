@@ -23,42 +23,63 @@
 #     -1000 <= matrix[i][j] <= 1000
 
 
+# so this is a really stupid solution. rotate the array by concentric squares
+# basically, rotate a 4-item sliding window. start with the corners. coordinates are given by:
+#  _________________
+# |     |     |     |
+# | x,y |     |x,n-y|
+# |_____|_____|_____|
+# |     |FREE |     |
+# |     |SPACE|     |
+# |_____|_____|_____|
+# | n-x,|     | n-x,|
+# |  y  |     | n-y |
+# |_____|_____|_____|
+#
+# where x,y refer to matrix coordinates, and n refers to array indexing bounds.
+# after rotating the corners, rotate the window n times
+# the center doesn't need to get rotated for odd n;
+# the number of concentric squares is len(matrix) >> 1
 class Solution:
-    def rotate(self, matrix: List[List[int]]) -> None:
+    def rotate(self, matrix: list[list[int]]) -> None:
         """
         Do not return anything, modify matrix in-place instead.
         """
-        n = len(matrix)
-        bounds = n - 1
-        # base_x = 0
-        # base_y = 0
-        # number of concentric squares to rotate. if n%2, ignore middle
-        # y,x refer to literal coordinate axes
-        for y in range(n >> 1):
-            # side length of current square
-            for x in range(y, bounds-y + 1):
+        n = len(matrix) - 1
+
+        for y in range(len(matrix) >> 1):
+            # side length of current square (shrinking each loop)
+            for x in range(y, n-y):
                 # store top right
+                cache_1 = matrix[x][n-y]
+
                 # top left -> top right
-                cache_1 = matrix[x][bounds-y]
-                matrix[x][bounds-y] = matrix[y][x]
+                matrix[x][n-y] = matrix[y][x]
 
                 # store bottom right
+                cache_2 = matrix[n-y][n-x]
+
                 # top right -> bottom right
-                cache_2 = matrix[bounds-y][bounds-x]
-                matrix[bounds-y][bounds-x] = cache_1
+                matrix[n-y][n-x] = cache_1
 
                 # store bottom left
+                cache_1 = matrix[n-x][y]
+
                 # bottom right -> bottom left
-                cache_1 = matrix[bounds-x][y]
-                matrix[bounds-y][bounds-x] = cache_2
+                matrix[n-x][y] = cache_2
 
                 # bottom left -> top left
                 matrix[y][x] = cache_1
 
+        return matrix
+
 
 from timing import batch
+import numpy as np
 
-data = [[1,2],[3,4]]
-classifiers = [[4,1],[2,3]]
+
+data = [[[1,2],[3,4]], [[1,2,3],[4,5,6],[7,8,9]]]
+classifiers = [[[elem for elem in line] for line in np.rot90(point, k=-1)] for point in data]
+#[[[3,1],[4,2]], ]
 
 batch(fns=[Solution().rotate], data=data, classifiers=classifiers)
