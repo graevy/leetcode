@@ -134,7 +134,6 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
     unpacker = '(*' if unpack_data else '('
 
     if not skip_print:
-        spacing = " " * 10
         suffix = 's' if loops != 1 else ''
 
         print(f"\nRuntimes over {loops} loop{suffix}: ")
@@ -169,11 +168,11 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
 
                     if correctness:
                         print(f"        Function {fn_name} ***Passed*** in {individual}/loop ({duration}):\n",
-                        spacing, f"Received {output}: {type(output)}")
+                        f"           Received {output}: {type(output)}")
                     else:
                         print(f"        Function {fn_name} ***Failed*** in {individual}/loop ({duration}):\n",
-                        spacing, f"Received {output}: {type(output)}\n",
-                        spacing, f"Expected {classifier}: {type(classifier)}")
+                        f"           Received {output}: {type(output)}\n",
+                        f"           Expected {classifier}: {type(classifier)}")
 
             results.append( (point, point_results) )
 
