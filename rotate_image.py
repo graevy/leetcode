@@ -23,53 +23,79 @@
 #     -1000 <= matrix[i][j] <= 1000
 
 
-# so this is a really stupid solution. rotate the array by concentric squares
-# basically, rotate a 4-item sliding window. start with the corners. coordinates are given by:
+
+# so this is my needlessly(?) complicated solution. rotate the array by concentric squares!
+# basically, rotate a 4-item sliding window. start with the corners. index the matrix like this:
 #  _________________
 # |     |     |     |
-# | x,y |     |x,n-y|
+# | x,r |     |x,b-r|
 # |_____|_____|_____|
 # |     |FREE |     |
 # |     |SPACE|     |
 # |_____|_____|_____|
-# | n-x,|     | n-x,|
-# |  y  |     | n-y |
+# | b-x,|     | b-x,|
+# |  r  |     | b-r |
 # |_____|_____|_____|
-#
-# where x,y refer to matrix coordinates, and n refers to array indexing bounds.
-# after rotating the corners, rotate the window n times
+
+# (x,r means matrix[x][r])
+# x refers to horizontal position in the concentric square's top row, r is the "radius" of that square,
+# and b refers to array indexing bounds (n - 1).
+# after rotating the corners, rotate the window b times by incrementing x
 # the center doesn't need to get rotated for odd n;
 # the number of concentric squares is len(matrix) >> 1
+
+#                       an example:
+#  _________       _________       _________       _________ 
+# |#|_|_|_|%|     |_|#|_|_|_|     |_|_|#|_|_|     |_|_|_|#|_|
+# |_|_|_|_|_|     |_|_|_|_|%|     |_|_|_|_|_|     |$|_|_|_|_|
+# |_|_|_|_|_|     |_|_|_|_|_|     |$|_|_|_|%|     |_|_|_|_|_|
+# |_|_|_|_|_|     |$|_|_|_|_|     |_|_|_|_|_|     |_|_|_|_|%|
+# |$|_|_|_|&|     |_|_|_|&|_|     |_|_|&|_|_|     |_|&|_|_|_|
+#
+#  _________       _________ 
+# |_|_|_|_|_|     |_|_|_|_|_|
+# |_|#|_|%|_|     |_|_|#|_|_|
+# |_|_|_|_|_|     |_|$|_|%|_|        Done!
+# |_|$|_|&|_|     |_|_|&|_|_|
+# |_|_|_|_|_|     |_|_|_|_|_|
+
+# the actual rotation consists of saving at most two values at once; this uses O(1) extra space
+# start from the first corner (#). save the second (%) and overwrite it with the first (#).
+# save the third corner (&) and overwrite it with the saved second (%)
+# save the fourth corner ($) on top of the saved second (%), dropping it from memory,
+# overwrite the fourth ($) with the third (&), lastly overwrite the first (#) with the fourth ($).
+
+
 class Solution:
     def rotate(self, matrix: list[list[int]]) -> None:
         """
         Do not return anything, modify matrix in-place instead.
         """
-        n = len(matrix) - 1
+        b = len(matrix) - 1
 
-        for y in range(len(matrix) >> 1):
+        for r in range(len(matrix) >> 1):
             # side length of current square (shrinking each loop)
-            for x in range(y, n-y):
+            for x in range(r, b-r):
                 # store top right
-                cache_1 = matrix[x][n-y]
+                cache_1 = matrix[x][b-r]
 
                 # top left -> top right
-                matrix[x][n-y] = matrix[y][x]
+                matrix[x][b-r] = matrix[r][x]
 
                 # store bottom right
-                cache_2 = matrix[n-y][n-x]
+                cache_2 = matrix[b-r][b-x]
 
                 # top right -> bottom right
-                matrix[n-y][n-x] = cache_1
+                matrix[b-r][b-x] = cache_1
 
-                # store bottom left
-                cache_1 = matrix[n-x][y]
+                # store bottom left, overwriting top right
+                cache_1 = matrix[b-x][r]
 
                 # bottom right -> bottom left
-                matrix[n-x][y] = cache_2
+                matrix[b-x][r] = cache_2
 
                 # bottom left -> top left
-                matrix[y][x] = cache_1
+                matrix[r][x] = cache_1
 
         return matrix
 
@@ -82,7 +108,9 @@ data = [[[1,2],[3,4]], [[1,2,3],[4,5,6],[7,8,9]], [[1]], [[]],
     [[1,2,3,4,5,6],[7,8,9,10,11,12],[13,14,15,16,17,18],
     [19,20,21,22,23,24],[25,26,27,28,29,30],[31,32,33,34,35,36]]
 ]
-# this classification doesn't work for the empty matrix but i just ignore it
+
+# this classification doesn't work for the empty matrix but i just ignore it,
+# because the problem guarantees non-empty matrices anyway.
 classifiers = [[[elem for elem in line] for line in np.rot90(point, k=-1)] for point in data]
 
 batch(fns=[Solution().rotate], data=data, classifiers=classifiers)
