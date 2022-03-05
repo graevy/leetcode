@@ -66,6 +66,7 @@
 # overwrite the fourth ($) with the third (&), lastly overwrite the first (#) with the fourth ($).
 
 
+# first try success! it's slow, verbose, unelegant, but functional
 class Solution:
     def rotate(self, matrix: list[list[int]]) -> None:
         """
