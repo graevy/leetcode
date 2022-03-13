@@ -107,14 +107,14 @@ def timed(fn):
     return inner
 
 
-# oh my god with classifiers this became so powerful
+# TODO: test unpack_data
 # checking skip_print only needs to happen once, but it'd bloat this whale of a function even harder
 # it's O(data), but because the function is O(data*fns*log(fns)*loops), it's basically nothing
 def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
 
     Args:
-        fns (iterable[function]): to evaluate
+        fns (Option[iterable[function], function]): to evaluate
         data (iterable): of points as function arg(s)
         classifiers (iterable): to verify fn output correctness.
             type(data[i]) = type(classifiers[i]).
@@ -128,6 +128,12 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
 
     Returns: results: list[tuple(   data[i], [result,fn,output,correctness]   )]
     """
+    # support for evaluating a single function/method
+    # i prefer it to batch(*fns, data=None, ...) because data isn't optional,
+    # and i think it's more intuitive than batch(data, *fns, ...).
+    # i might change this, but i settled on this after awhile
+    if callable(fns): fns = [fns]
+
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
 
