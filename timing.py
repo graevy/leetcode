@@ -107,8 +107,12 @@ def timed(fn):
     return inner
 
 
-# TODO: test unpack_data
-# checking skip_print only needs to happen once, but it'd bloat this whale of a function even harder
+# TODO: support for custom objects passed into timeit
+# f"{fn}({repr(point)})" -> r"fn(<memory address>)" -> timeit syntax error
+
+# i'm feeling like an interface between calling and executing could remove duplicate code,
+# or at least make it more readable.
+# checking skip_print/unpack_data only needs to happen once, but it'd bloat this whale of a function even harder
 # it's O(data), but because the function is O(data*fns*log(fns)*loops), it's basically nothing
 def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
     """prints function(s) output and runtime over datapoints 
@@ -137,11 +141,8 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
 
-    unpacker = '(*' if unpack_data else '('
-
     if not skip_print:
-        suffix = 's' if loops != 1 else ''
-
+        suffix = 's' if loops > 1 else ''
         print(f"\nRuntimes over {loops} loop{suffix}: ")
 
     results = []
@@ -156,12 +157,16 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
                 print(f"    Point {repr(point)}: {type(point)}:")
 
             for fn in fns:
-                # timeit will execute this statement, which is basically "fn(point)"
-                timeit_statement = fn.__name__ + unpacker + repr(point) + ')'
+                if unpack_data:
+                    # timeit times this statement, which is basically "fn(point)"
+                    timeit_statement = f"{fn.__name__}(*{repr(point)})"
+                    # store fn(point) outside of timeit
+                    output = fn(*point)
+                else:
+                    timeit_statement = f"{fn.__name__}({repr(point)})"
+                    output = fn(point)
                 # here's the execution
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
-                # run it again to store fn(point). could have it write to output inside the statement maybe
-                output = fn(point)
                 fn_result = (duration, fn.__name__, output, output == classifier)
                 point_results.append(fn_result)
 
@@ -187,9 +192,14 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
         for point in data:
             point_results = []
             for fn in fns:
-                timeit_statement = fn.__name__ + unpacker + repr(point) + ')'
+                if unpack_data:
+                    timeit_statement = f"{fn.__name__}(*{repr(point)})"
+                    output = fn(*point)
+                else:
+                    timeit_statement = f"{fn.__name__}({repr(point)})"
+                    output = fn(point)
+
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
-                output = fn(point)
                 fn_result = (duration, fn.__name__, output)
                 point_results.append(fn_result)
 
