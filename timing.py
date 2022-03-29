@@ -107,9 +107,6 @@ def timed(fn):
     return inner
 
 
-# TODO: support for custom objects passed into timeit
-# f"{fn}({repr(point)})" -> r"fn(<memory address>)" -> timeit syntax error
-
 # i'm feeling like an interface between calling and executing could remove duplicate code,
 # or at least make it more readable.
 # checking skip_print/unpack_data only needs to happen once, but it'd bloat this whale of a function even harder
@@ -136,10 +133,21 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
     # i prefer it to batch(*fns, data=None, ...) because data isn't optional,
     # and i think it's more intuitive than batch(data, *fns, ...).
     # i might change this, but i settled on this after awhile
-    if callable(fns): fns = [fns]
+    if callable(fns):
+        fns = tuple(fns)
 
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
+    # for non-primitive objects, timeit won't understand repr(point)
+    if unpack_data:
+        for compound_type in data:
+            for point in compound_type:
+                if hasattr(point, '__dict__') or hasattr(point, '__slots__'):
+                    timeit_namespace[repr(point)] = point
+    else:
+        for point in data:
+            if hasattr(point, '__dict__') or hasattr(point, '__slots__'):
+                timeit_namespace[repr(point)] = point
 
     if not skip_print:
         suffix = 's' if loops > 1 else ''
