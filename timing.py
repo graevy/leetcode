@@ -138,12 +138,12 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
 
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
-    # for non-primitive objects, timeit won't understand repr(point)
+    # for custom objects, timeit won't understand repr(point)
     if unpack_data:
-        for compound_type in data:
-            for point in compound_type:
-                if hasattr(point, '__dict__') or hasattr(point, '__slots__'):
-                    timeit_namespace[repr(point)] = point
+        for point in data:
+            for arg in point:
+                if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
+                    timeit_namespace[repr(arg)] = arg
     else:
         for point in data:
             if hasattr(point, '__dict__') or hasattr(point, '__slots__'):

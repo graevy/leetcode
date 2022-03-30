@@ -1,26 +1,19 @@
-class Trie:
-
-    def __init__(self):
-        self.words = {}
-
-    def insert(self, word: str) -> None:
-        letter_dict = self.words
-        for char in word:
-            letter_dict = letter_dict.setdefault(char,{})
-
-    def search(self, word: str) -> bool:
-        letter_dict = self.words
-        for char in word:
-            if char not in letter_dict:
-                return false
-            letter_dict = letter_dict[char]
-        return True
-
-    def startsWith(self, prefix: str) -> bool:
-        return self.search(prefix)
+class Data:
+    def __init__(self, arg_list, n=1):
+        self.arg_list = arg_list
+        self.n = n
+        self.idx = 0
+        self.max = len(arg_list)
+    def get_args(self):
+        out = self.arg_list[self.idx : self.idx + self.n]
+        self.idx += self.n
+        self.idx %= self.max
+        return out
 
 
-a = Trie()
-a.insert('test')
-a.insert('two')
-print(a.search('test'),a.startsWith('t'))
+a = Data(['a','b','c','d','e','f'], n=2)
+print(a.get_args())
+print(a.get_args())
+print(a.get_args())
+print(a.get_args())
+
