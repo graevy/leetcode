@@ -2,6 +2,8 @@
 
 import math
 from timeit import timeit
+import itertools
+import deepcopy
 
 
 # python does a little of this with scientific notation but I like the unit notation
@@ -111,44 +113,51 @@ def timed(fn):
 # or at least make it more readable.
 # checking skip_print/unpack_data only needs to happen once, but it'd bloat this whale of a function even harder
 # it's O(data), but because the function is O(data*fns*log(fns)*loops), it's basically nothing
-def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_data=False):
-    """prints function(s) output and runtime over datapoints 
+def batch(fns, args, classifiers=None, loops=100000, skip_print=False, args_per_fn=1):
+    """prints function(s) output and runtime over args 
 
     Args:
         fns (Option[iterable[function], function]): to evaluate
-        data (iterable): of points as function arg(s)
+        args (iterable): of points as function arg(s)
         classifiers (iterable): to verify fn output correctness.
-            type(data[i]) = type(classifiers[i]).
-            len(classifiers) = len(data). Defaults to None
+            type(args[i]) = type(classifiers[i]).
+            len(classifiers) = len(args). Defaults to None
         loops (int, optional): for runtime calc,
-            per function per datapoint. Defaults to 100000.
+            per function per arg. Defaults to 100000.
         skip_print (bool, optional): ing output? Defaults to False.
-        unpack_data (bool, optional): for fn(*point) instead of fn(point)
+        unpack_args (bool, optional): for fn(*point) instead of fn(point)
 
-    Time: O(data*fns*log(fns)*loops)
+    Time: O(args*fns*log(fns)*loops)
 
-    Returns: results: list[tuple(   data[i], [result,fn,output,correctness]   )]
+    Returns: results: list[tuple(   args[i], [result,fn,output,correctness]   )]
     """
     # support for evaluating a single function/method
-    # i prefer it to batch(*fns, data=None, ...) because data isn't optional,
-    # and i think it's more intuitive than batch(data, *fns, ...).
+    # i prefer it to batch(*fns, args=None, ...) because args isn't optional,
+    # and i think it's more intuitive than batch(args, *fns, ...).
     # i might change this, but i settled on this after awhile
     if callable(fns):
-        fns = ((fns,))
+        fns = [fns]
 
     # for custom objects, timeit won't understand repr(point). the workaround is
-    # a symbol table inside a symbol table injected into timeit via its globals param
+    # a symbol table injected into timeit via its globals param
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
 
+    # many algs will mutate input in-place,
+    # preserving a copy helps print output, and lets us mutate data
+    data = deepcopy(args)
+
+    # i'm just packing everything in a compound data type rather than perform tedious islices
+    for idx, elem in enumerate(data):
+        if not hasattr(elem, "__iter__") or type(elem) is str:
+            data[idx] = [elem]
+
+    # timeit won't understand non builtins
     for point in data:
-        if unpack_data:
-            for arg in point:
-                if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
-                    timeit_namespace[repr(arg)] = arg
-        else:
-            if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
-                    timeit_namespace[repr(arg)] = arg
+        for arg in point:
+            if arg.__class__.__module__ != 'builtins': # why do they keep changing the dunderscores
+                timeit_namespace[hash(arg)] = arg
+
 
     # # obj_hashes = {hash(point):point for point in data}
     # if not unpack_data:
@@ -186,14 +195,10 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
                 print(f"    Point {repr(point)}: {type(point)}:")
 
             for fn in fns:
-                if unpack_data:
-                    # timeit times this statement, which is basically "fn(point)"
-                    timeit_statement = f"{fn.__name__}(*(obj_hashes[arg] for arg in {map(hash, point)}))"
-                    # store fn(point) outside of timeit
-                    output = fn(*point)
-                else:
-                    timeit_statement = f"{fn.__name__}(obj_hashes[{hash(point)}])"
-                    output = fn(point)
+                # timeit times this statement, which is basically "fn(point)"
+                timeit_statement = f"{fn.__name__}(*{repr(point)})"
+                # store fn(point) outside of timeit
+                output = fn(*point)
                 # here's the execution
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
                 fn_result = (duration, fn.__name__, output, output == classifier)
