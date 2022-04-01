@@ -134,20 +134,41 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
     # and i think it's more intuitive than batch(data, *fns, ...).
     # i might change this, but i settled on this after awhile
     if callable(fns):
-        fns = tuple(fns)
+        fns = ((fns,))
 
+    # for custom objects, timeit won't understand repr(point). the workaround is
+    # a symbol table inside a symbol table injected into timeit via its globals param
     # see timeit_namespace explanation at end of file
     timeit_namespace = {fn.__name__:fn for fn in fns}
-    # for custom objects, timeit won't understand repr(point)
-    if unpack_data:
-        for point in data:
+
+    for point in data:
+        if unpack_data:
             for arg in point:
                 if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
                     timeit_namespace[repr(arg)] = arg
-    else:
-        for point in data:
-            if hasattr(point, '__dict__') or hasattr(point, '__slots__'):
-                timeit_namespace[repr(point)] = point
+        else:
+            if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
+                    timeit_namespace[repr(arg)] = arg
+
+    # # obj_hashes = {hash(point):point for point in data}
+    # if not unpack_data:
+    #     obj_hashes = {hash(arg):arg for arg in data}
+    # else:
+    #     obj_hashes = {hash(arg):arg for point in data for arg in point}
+    # timeit_namespace['obj_hashes'] = obj_hashes
+    # for custom objects, timeit won't understand repr(point)
+    # TODO: this isn't a practical fix
+    # def add_to_timeit_namespace(arg):
+    #     timeit_namespace[str(id(arg))] = arg
+
+    # for point in data:
+    #     if unpack_data:
+    #         for arg in point:
+    #             if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
+    #                 timeit_namespace[repr(arg)] = arg
+    #     else:
+    #         if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
+    #                 timeit_namespace[repr(arg)] = arg
 
     if not skip_print:
         suffix = 's' if loops > 1 else ''
@@ -167,11 +188,11 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
             for fn in fns:
                 if unpack_data:
                     # timeit times this statement, which is basically "fn(point)"
-                    timeit_statement = f"{fn.__name__}(*{repr(point)})"
+                    timeit_statement = f"{fn.__name__}(*(obj_hashes[arg] for arg in {map(hash, point)}))"
                     # store fn(point) outside of timeit
                     output = fn(*point)
                 else:
-                    timeit_statement = f"{fn.__name__}({repr(point)})"
+                    timeit_statement = f"{fn.__name__}(obj_hashes[{hash(point)}])"
                     output = fn(point)
                 # here's the execution
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
@@ -201,10 +222,10 @@ def batch(fns, data, classifiers=None, loops=100000, skip_print=False, unpack_da
             point_results = []
             for fn in fns:
                 if unpack_data:
-                    timeit_statement = f"{fn.__name__}(*{repr(point)})"
+                    timeit_statement = f"{fn.__name__}(*(obj_hashes[arg] for arg in {[hash(arg) for arg in point]}))"
                     output = fn(*point)
                 else:
-                    timeit_statement = f"{fn.__name__}({repr(point)})"
+                    timeit_statement = f"{fn.__name__}(obj_hashes[{hash(point)}])"
                     output = fn(point)
 
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
