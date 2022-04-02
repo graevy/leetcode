@@ -66,6 +66,6 @@ data = [(2,5), (5,2), (-2, 5), (-5,2), (4,1), (4,2), (1,1), (0,1), (31,12), (-23
 classifiers = [int(x/y) for x,y in data]
 
 from timing import batch
-batch([Solution().divide, Solution().divide2], data, classifiers=classifiers, unpack_data=True)
+batch([Solution().divide, Solution().divide2], data, classifiers=classifiers)
 
 # print(Solution().divide(-5,2))

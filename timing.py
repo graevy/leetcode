@@ -3,7 +3,7 @@
 import math
 from timeit import timeit
 import itertools
-import deepcopy
+import copy
 
 
 # python does a little of this with scientific notation but I like the unit notation
@@ -83,7 +83,7 @@ def timed(fn):
                     print(f"function {fn.__name__}: Passed")
                 else:
                     print(f"function {fn.__name__}: Failed.",
-                          f"Expected {repr(classifier)}: {type,(classifier)}")
+                          f"Expected {repr(classifier)}: {type(classifier)}")
             else:
                 print(f"function {fn.__name__}:")
 
@@ -113,7 +113,7 @@ def timed(fn):
 # or at least make it more readable.
 # checking skip_print/unpack_data only needs to happen once, but it'd bloat this whale of a function even harder
 # it's O(data), but because the function is O(data*fns*log(fns)*loops), it's basically nothing
-def batch(fns, args, classifiers=None, loops=100000, skip_print=False, args_per_fn=1):
+def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_args=True):
     """prints function(s) output and runtime over args 
 
     Args:
@@ -125,7 +125,7 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, args_per_
         loops (int, optional): for runtime calc,
             per function per arg. Defaults to 100000.
         skip_print (bool, optional): ing output? Defaults to False.
-        unpack_args (bool, optional): for fn(*point) instead of fn(point)
+        unpack_args (bool, optional): TODO
 
     Time: O(args*fns*log(fns)*loops)
 
@@ -138,46 +138,19 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, args_per_
     if callable(fns):
         fns = [fns]
 
-    # for custom objects, timeit won't understand repr(point). the workaround is
-    # a symbol table injected into timeit via its globals param
-    # see timeit_namespace explanation at end of file
-    timeit_namespace = {fn.__name__:fn for fn in fns}
-
     # many algs will mutate input in-place,
     # preserving a copy helps print output, and lets us mutate data
-    data = deepcopy(args)
+    # just packing everything in a compound data type rather than perform tedious islices
+    if not nested_args:
+        data = [[elem] for elem in args]
+    else:
+        data = copy.deepcopy(args)
 
-    # i'm just packing everything in a compound data type rather than perform tedious islices
-    for idx, elem in enumerate(data):
-        if not hasattr(elem, "__iter__") or type(elem) is str:
-            data[idx] = [elem]
-
-    # timeit won't understand non builtins
-    for point in data:
-        for arg in point:
-            if arg.__class__.__module__ != 'builtins': # why do they keep changing the dunderscores
-                timeit_namespace[hash(arg)] = arg
-
-
-    # # obj_hashes = {hash(point):point for point in data}
-    # if not unpack_data:
-    #     obj_hashes = {hash(arg):arg for arg in data}
-    # else:
-    #     obj_hashes = {hash(arg):arg for point in data for arg in point}
-    # timeit_namespace['obj_hashes'] = obj_hashes
-    # for custom objects, timeit won't understand repr(point)
-    # TODO: this isn't a practical fix
-    # def add_to_timeit_namespace(arg):
-    #     timeit_namespace[str(id(arg))] = arg
-
-    # for point in data:
-    #     if unpack_data:
-    #         for arg in point:
-    #             if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
-    #                 timeit_namespace[repr(arg)] = arg
-    #     else:
-    #         if hasattr(arg, '__dict__') or hasattr(arg, '__slots__'):
-    #                 timeit_namespace[repr(arg)] = arg
+    # for custom objects, timeit won't understand repr(point). the workaround is
+    # a symbol table injected into timeit via its globals param
+    # this behaves like the setup param
+    # see timeit_namespace explanation at end of file
+    timeit_namespace = {fn.__name__:fn for fn in fns} | {'_' + hex(id(point)):point for point in data}
 
     if not skip_print:
         suffix = 's' if loops > 1 else ''
@@ -195,8 +168,8 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, args_per_
                 print(f"    Point {repr(point)}: {type(point)}:")
 
             for fn in fns:
-                # timeit times this statement, which is basically "fn(point)"
-                timeit_statement = f"{fn.__name__}(*{repr(point)})"
+                # timeit times this statement, "fn(*point)"
+                timeit_statement = f"{fn.__name__}(*{'_' + hex(id(point))})"
                 # store fn(point) outside of timeit
                 output = fn(*point)
                 # here's the execution
@@ -226,13 +199,8 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, args_per_
         for point in data:
             point_results = []
             for fn in fns:
-                if unpack_data:
-                    timeit_statement = f"{fn.__name__}(*(obj_hashes[arg] for arg in {[hash(arg) for arg in point]}))"
-                    output = fn(*point)
-                else:
-                    timeit_statement = f"{fn.__name__}(obj_hashes[{hash(point)}])"
-                    output = fn(point)
-
+                timeit_statement = f"{fn.__name__}(*{'_' + hex(id(point))})"
+                output = fn(*point)
                 duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
                 fn_result = (duration, fn.__name__, output)
                 point_results.append(fn_result)

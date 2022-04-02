@@ -102,4 +102,4 @@ import linkedlist
 import timing
 
 l = linkedlist.list_to_linked([5,8,23,34,2,7,8])
-timing.batch(Solution().queue, [[l,2]], unpack_data=True)
+timing.batch(Solution().queue, [[l,2]])
