@@ -17,9 +17,6 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_ar
 
     Returns: results: TODO [[result,fn,output,correctness]]
     """
-    if classifiers is not None:
-        if len(args) != len(classifiers):
-            raise Exception("len(args) != len(classifiers)")
 
     # support for evaluating a single function/method
     # i prefer it to batch(*fns, args=None, ...) because args isn't optional,
@@ -36,9 +33,9 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_ar
     else:
         data = copy.deepcopy(args)
 
-    results = []
     # categorize the results by datapoint instead of by function
     # this simplifies comparing algorithm runtime, and neatens classification
+    results = []
     for idx, point in enumerate(data):
         point_results = []
         for fn in fns:
@@ -54,9 +51,11 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_ar
 
     # TODO: combine this loop with the printing loop?
     if classifiers is not None:
-        for idx, point_result in enumerate(results):
-            output, classifier = point_result[-1], classifiers[idx]
-            point_result.append(output == classifier)
+        if len(args) != len(classifiers):
+            raise Exception("len(args) != len(classifiers)")
+
+        for idx, (_,_,output) in enumerate(results):
+            point_result.append(output == classifiers[idx])
 
     if not skip_print:
         suffix = 's' if loops > 1 else ''
