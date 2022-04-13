@@ -112,6 +112,7 @@ def timed(fn):
 # i'm feeling like an interface between calling and executing could remove duplicate code,
 # or at least make it more readable.
 # checking skip_print/unpack_data only needs to happen once, but it'd bloat this whale of a function even harder
+# TODO: timeit.Timer().autorange enables loops=None, dropping the param entirely
 # it's O(data), but because the function is O(data*fns*log(fns)*loops), it's basically nothing
 def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_args=True):
     """prints function(s) output and runtime over args 
@@ -146,12 +147,6 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_ar
     else:
         data = copy.deepcopy(args)
 
-    # for custom objects, timeit won't understand repr(point). the workaround is
-    # a symbol table injected into timeit via its globals param
-    # this behaves like the setup param
-    # see timeit_namespace explanation at end of file
-    timeit_namespace = {fn.__name__:fn for fn in fns} | {'_' + hex(id(point)):point for point in data}
-
     if not skip_print:
         suffix = 's' if loops > 1 else ''
         print(f"\nRuntimes over {loops} loop{suffix}: ")
@@ -168,12 +163,10 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_ar
                 print(f"    Point {repr(point)}: {type(point)}:")
 
             for fn in fns:
-                # timeit times this statement, "fn(*point)"
-                timeit_statement = f"{fn.__name__}(*{'_' + hex(id(point))})"
                 # store fn(point) outside of timeit
                 output = fn(*point)
                 # here's the execution
-                duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
+                duration = timeit("fn(*point)", number=loops, globals={"fn":fn, "point":point})
                 fn_result = (duration, fn.__name__, output, output == classifier)
                 point_results.append(fn_result)
 
@@ -199,9 +192,9 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_ar
         for point in data:
             point_results = []
             for fn in fns:
-                timeit_statement = f"{fn.__name__}(*{'_' + hex(id(point))})"
+                # timeit_statement = f"{fn.__name__}(*_{hex(id(point))})"
                 output = fn(*point)
-                duration = timeit(timeit_statement, number=loops, globals=timeit_namespace)
+                duration = timeit("fn(*point)", number=loops, globals={"fn":fn, "point":point})
                 fn_result = (duration, fn.__name__, output)
                 point_results.append(fn_result)
 
