@@ -35,56 +35,62 @@ def batch(fns, args, classifiers=None, loops=100000, skip_print=False, nested_ar
 
     # categorize the results by datapoint instead of by function
     # this simplifies comparing algorithm runtime, and neatens classification
-    results = []
-    for idx, point in enumerate(data):
-        point_results = []
+    res = []
+    for point in data:
+        point_res = []
         for fn in fns:
             # store result outside of timeit
             output = fn(*point)
-            # here's the execution
+            # bulk of the runtime
             duration = timeit("fn(*point)", number=loops,
                 globals={"fn":fn, "point":point})
-            fn_result = [duration, fn, output]
-            point_results.append(fn_result)
-
-        results.append( (point, point_results) )
+            fn_res = [duration, fn, output]
+            point_res.append(fn_res)
+        res.append(point_res)
+        # res is e.g. [['212.053ns', quicksort, [1,3,5,8]], ['253.782ns', failsort, [1,5,3,8]]]
 
     # TODO: combine this loop with the printing loop?
+    # the whole flow of control with these loops and classifiers is pretty garbage
+    # i'm thinking this function is a good target for OOP -- point could just be a class
     if classifiers is not None:
         if len(args) != len(classifiers):
             raise Exception("len(args) != len(classifiers)")
 
-        for idx, (_,_,output) in enumerate(results):
-            point_result.append(output == classifiers[idx])
+        for idx, (_,_,output) in enumerate(res):
+            res[idx].append(output == classifiers[idx])
 
     if not skip_print:
         suffix = 's' if loops > 1 else ''
         print(f"\nRuntimes over {loops} loop{suffix}: ")
 
-        for idx, point_result in enumerate(results):
+        for idx, point_res in enumerate(res):
+            if classifiers is not None:
+                duration, fn, output = point_res
+            else:
+                duration, fn, output, success = point_res
+
             input = args[idx]
             print(f"    Point {repr(input)}: {type(input)}:")
 
-            for duration, fn, output in sorted(point_result):
-                # individual loop duration
-                individual = format_time(duration/loops)
-                # total loop duration
-                duration = format_time(duration)
-                # printing tools
-                output_str = f"{output}: {type(output)}"
-                header = f"        Function {fn.__name__}"
+            # individual loop duration
+            individual = format_time(duration/loops)
+            # total loop duration
+            duration = format_time(duration)
+            # printing tools
+            output_str = f"{output}: {type(output)}"
+            header = f"        Function {fn.__name__}"
 
-                if classifiers is not None:
-                    classifier = classifiers[idx]
+            if classifiers is not None:
+                classifier = classifiers[idx]
 
-                    if success:
-                        print(header, f"***Passed*** in {individual} per loop ({duration}):\n",
-                        f"           Received {output_str}")
-                    else:
-                        print(header, f"***Failed*** in {individual} per loop ({duration}):\n",
-                        f"           Received {output_str}\n",
-                        f"           Expected {classifier}: {type(classifier)}")
+                if success:
+                    print(header, f"***Passed*** in {individual} per loop ({duration}):\n",
+                    f"           Received {output_str}")
                 else:
-                    print(header, f"yielded {output_str} in {individual} per loop ({duration})")
+                    print(header, f"***Failed*** in {individual} per loop ({duration}):\n",
+                    f"           Received {output_str}\n",
+                    f"           Expected {classifier}: {type(classifier)}")
+            else:
+                print(header, f"yielded {output_str} in {individual} per loop ({duration})")
 
-    return results
+    return res
